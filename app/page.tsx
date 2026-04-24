@@ -84,8 +84,18 @@ export default async function Home() {
     home.played += 1;
     away.played += 1;
 
-    home.goal_difference += fixture.home_score - fixture.away_score;
-    away.goal_difference += fixture.away_score - fixture.home_score;
+    const homeTotal =
+      (fixture.home_set1 || 0) +
+      (fixture.home_set2 || 0) +
+      (fixture.home_set3 || 0);
+
+    const awayTotal =
+      (fixture.away_set1 || 0) +
+      (fixture.away_set2 || 0) +
+      (fixture.away_set3 || 0);
+
+    home.goal_difference += homeTotal - awayTotal;
+    away.goal_difference += awayTotal - homeTotal;
 
     if (fixture.home_score > fixture.away_score) {
       home.won += 1;
