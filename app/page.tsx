@@ -95,11 +95,16 @@ export default async function Home({
     const home = table[f.home_team_id];
     const away = table[f.away_team_id];
 
+    if (!home || !away) return;
+
     home.played++;
     away.played++;
 
-    const homeGames = (f.home_set1 || 0) + (f.home_set2 || 0) + (f.home_set3 || 0);
-    const awayGames = (f.away_set1 || 0) + (f.away_set2 || 0) + (f.away_set3 || 0);
+    const homeGames =
+      (f.home_set1 || 0) + (f.home_set2 || 0) + (f.home_set3 || 0);
+
+    const awayGames =
+      (f.away_set1 || 0) + (f.away_set2 || 0) + (f.away_set3 || 0);
 
     home.goal_difference += homeGames - awayGames;
     away.goal_difference += awayGames - homeGames;
@@ -108,7 +113,7 @@ export default async function Home({
       home.won++;
       away.lost++;
       home.points += 3;
-    } else {
+    } else if (f.away_score > f.home_score) {
       away.won++;
       home.lost++;
       away.points += 3;
@@ -117,13 +122,26 @@ export default async function Home({
 
   const league = Object.values(table).sort((a: any, b: any) => {
     if (b.points !== a.points) return b.points - a.points;
-    if (b.goal_difference !== a.goal_difference)
+    if (b.goal_difference !== a.goal_difference) {
       return b.goal_difference - a.goal_difference;
+    }
     return b.won - a.won;
   });
 
-  const getName = (id: number) =>
-    teams?.find((t: any) => t.id === id)?.name;
+  const getName = (id: number) => {
+    return teams?.find((t: any) => t.id === id)?.name || "Unknown";
+  };
+
+  const inputStyle = {
+    width: "100%",
+    padding: "8px",
+    border: "1px solid #999",
+    borderRadius: "6px",
+    fontSize: "16px",
+    color: "#000000",
+    background: "#ffffff",
+    opacity: 1,
+  };
 
   return (
     <main
@@ -133,9 +151,10 @@ export default async function Home({
         margin: "0 auto",
         background: secondary,
         minHeight: "100vh",
+        color: "#000000",
+        fontFamily: "Arial",
       }}
     >
-      {/* LOGO */}
       {currentDivision.logo_url && (
         <div
           style={{
@@ -146,16 +165,17 @@ export default async function Home({
         >
           <img
             src={currentDivision.logo_url}
+            alt={`${currentDivision.name} logo`}
             style={{
               maxWidth: "180px",
               width: "100%",
               height: "auto",
+              display: "block",
             }}
           />
         </div>
       )}
 
-      {/* TITLE */}
       <h1
         style={{
           background: primary,
@@ -163,23 +183,35 @@ export default async function Home({
           padding: "16px",
           borderRadius: "10px",
           textAlign: "center",
+          fontSize: "28px",
         }}
       >
         {currentDivision.name}
       </h1>
 
-      {/* DIVISION BUTTONS */}
-      <div style={{ display: "flex", gap: "8px", overflowX: "auto", margin: "12px 0" }}>
+      <div
+        style={{
+          display: "flex",
+          gap: "8px",
+          overflowX: "auto",
+          margin: "12px 0 22px 0",
+          paddingBottom: "6px",
+        }}
+      >
         {divisions?.map((d: any) => (
           <a
             key={d.id}
             href={`/?division=${d.id}`}
             style={{
-              padding: "8px 12px",
-              borderRadius: "20px",
-              background: d.id === selectedDivisionId ? primary : "#eee",
-              color: d.id === selectedDivisionId ? textColor : "#000",
+              padding: "10px 14px",
+              borderRadius: "999px",
+              background: d.id === selectedDivisionId ? primary : "#eeeeee",
+              color: d.id === selectedDivisionId ? textColor : "#000000",
               textDecoration: "none",
+              fontWeight: "bold",
+              whiteSpace: "nowrap",
+              border: "1px solid #ddd",
+              opacity: 1,
             }}
           >
             {d.name}
@@ -187,69 +219,191 @@ export default async function Home({
         ))}
       </div>
 
-      {/* TABLE */}
-      <h2>League Table</h2>
+      <h2 style={{ color: "#000000" }}>League Table</h2>
 
-      <table style={{ width: "100%", borderCollapse: "collapse" }}>
-        <thead style={{ background: primary, color: textColor }}>
-          <tr>
-            <th style={{ padding: "10px", textAlign: "left" }}>Team</th>
-            <th>P</th>
-            <th>W</th>
-            <th>L</th>
-            <th>GD</th>
-            <th>Pts</th>
-          </tr>
-        </thead>
-        <tbody>
-          {league.map((t: any) => (
-            <tr key={t.id} style={{ borderBottom: "1px solid #ccc" }}>
-              <td style={{ padding: "10px" }}>{t.name}</td>
-              <td>{t.played}</td>
-              <td>{t.won}</td>
-              <td>{t.lost}</td>
-              <td>{t.goal_difference > 0 ? "+" + t.goal_difference : t.goal_difference}</td>
-              <td>{t.points}</td>
+      <div
+        style={{
+          overflowX: "auto",
+          border: `2px solid ${primary}`,
+          borderRadius: "10px",
+          background: "#ffffff",
+          marginBottom: "26px",
+        }}
+      >
+        <table
+          style={{
+            width: "100%",
+            borderCollapse: "collapse",
+            color: "#000000",
+          }}
+        >
+          <thead style={{ background: primary, color: textColor }}>
+            <tr>
+              <th style={{ padding: "10px", textAlign: "left" }}>Team</th>
+              <th style={{ padding: "10px" }}>P</th>
+              <th style={{ padding: "10px" }}>W</th>
+              <th style={{ padding: "10px" }}>L</th>
+              <th style={{ padding: "10px" }}>GD</th>
+              <th style={{ padding: "10px" }}>Pts</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
 
-      {/* FIXTURES */}
-      <h2 style={{ marginTop: "20px" }}>Fixtures</h2>
+          <tbody>
+            {league.map((t: any) => (
+              <tr key={t.id} style={{ borderBottom: `1px solid ${primary}` }}>
+                <td
+                  style={{
+                    padding: "10px",
+                    fontWeight: "bold",
+                    color: "#000000",
+                  }}
+                >
+                  {t.name}
+                </td>
+                <td style={{ textAlign: "center", color: "#000000" }}>{t.played}</td>
+                <td style={{ textAlign: "center", color: "#000000" }}>{t.won}</td>
+                <td style={{ textAlign: "center", color: "#000000" }}>{t.lost}</td>
+                <td
+                  style={{
+                    textAlign: "center",
+                    color: "#000000",
+                    fontWeight: "bold",
+                  }}
+                >
+                  {t.goal_difference > 0
+                    ? "+" + t.goal_difference
+                    : t.goal_difference}
+                </td>
+                <td
+                  style={{
+                    textAlign: "center",
+                    color: "#000000",
+                    fontWeight: "bold",
+                  }}
+                >
+                  {t.points}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
-      {fixtures?.length === 0 && <p>No fixtures added.</p>}
+      <h2 style={{ color: "#000000" }}>Fixtures</h2>
+
+      {fixtures?.length === 0 && (
+        <p style={{ color: "#222222", fontWeight: "500" }}>
+          No fixtures added.
+        </p>
+      )}
 
       {fixtures?.map((f: any) => (
         <div
           key={f.id}
           style={{
-            border: `1px solid ${primary}`,
-            padding: "10px",
+            border: `2px solid ${primary}`,
+            padding: "12px",
             borderRadius: "10px",
-            marginBottom: "10px",
-            background: "#fff",
+            marginBottom: "12px",
+            background: "#ffffff",
+            color: "#000000",
           }}
         >
-          <div style={{ marginBottom: "6px" }}>{f.fixture_date}</div>
+          <div
+            style={{
+              marginBottom: "8px",
+              color: "#222222",
+              fontWeight: "500",
+            }}
+          >
+            {f.fixture_date || "TBC"}
+          </div>
 
-          <div style={{ display: "flex", justifyContent: "space-between" }}>
-            <strong>{getName(f.home_team_id)}</strong>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr auto 1fr",
+              gap: "8px",
+              alignItems: "center",
+              marginBottom: "10px",
+            }}
+          >
+            <strong style={{ color: "#111111", fontSize: "15px" }}>
+              {getName(f.home_team_id)}
+            </strong>
 
-            <div>
+            <div
+              style={{
+                color: "#000000",
+                fontWeight: "bold",
+                textAlign: "center",
+                minWidth: "55px",
+              }}
+            >
               {f.played ? `${f.home_score} - ${f.away_score}` : "vs"}
             </div>
 
-            <strong>{getName(f.away_team_id)}</strong>
+            <strong
+              style={{
+                color: "#111111",
+                fontSize: "15px",
+                textAlign: "right",
+              }}
+            >
+              {getName(f.away_team_id)}
+            </strong>
           </div>
+
+          {f.played && (
+            <div
+              style={{
+                textAlign: "center",
+                fontSize: "13px",
+                color: "#333333",
+                marginBottom: "10px",
+                fontWeight: "500",
+              }}
+            >
+              {f.home_set1}-{f.away_set1} | {f.home_set2}-{f.away_set2} |{" "}
+              {f.home_set3}-{f.away_set3}
+            </div>
+          )}
 
           <form action={submitScore} style={{ marginTop: "10px" }}>
             <input type="hidden" name="fixture_id" value={f.id} />
 
             {[1, 2, 3].map((s) => (
-              <div key={s} style={{ display: "flex", gap: "5px", marginBottom: "4px" }}>
-                <input name={`home_set${s}`} type="number" placeholder="H" required />
-                <input name={`away_set${s}`} type="number" placeholder="A" required />
+              <div key={s} style={{ marginBottom: "8px" }}>
+                <div
+                  style={{
+                    fontSize: "13px",
+                    fontWeight: "bold",
+                    color: "#222222",
+                    marginBottom: "4px",
+                  }}
+                >
+                  Set {s}
+                </div>
+
+                <div style={{ display: "flex", gap: "8px" }}>
+                  <input
+                    name={`home_set${s}`}
+                    type="number"
+                    placeholder="Home"
+                    defaultValue={f[`home_set${s}`] ?? ""}
+                    required
+                    style={inputStyle}
+                  />
+
+                  <input
+                    name={`away_set${s}`}
+                    type="number"
+                    placeholder="Away"
+                    defaultValue={f[`away_set${s}`] ?? ""}
+                    required
+                    style={inputStyle}
+                  />
+                </div>
               </div>
             ))}
 
@@ -259,10 +413,13 @@ export default async function Home({
                 width: "100%",
                 background: primary,
                 color: textColor,
-                padding: "10px",
-                borderRadius: "6px",
+                padding: "12px",
+                borderRadius: "8px",
                 border: "none",
                 marginTop: "6px",
+                fontWeight: "bold",
+                fontSize: "16px",
+                opacity: 1,
               }}
             >
               Save Result
