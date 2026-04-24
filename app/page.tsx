@@ -70,9 +70,19 @@ export default async function Home({
     .eq("division_id", selectedDivisionId)
     .order("fixture_date", { ascending: true });
 
-  const currentDivision =
-    divisions?.find((division: any) => division.id === selectedDivisionId)?.name ||
-    `Division ${selectedDivisionId}`;
+  const currentDivision: any =
+    divisions?.find((division: any) => division.id === selectedDivisionId) || {
+      id: selectedDivisionId,
+      name: `Division ${selectedDivisionId}`,
+      logo_url: "",
+      primary_color: "#000000",
+      secondary_color: "#ffffff",
+      text_color: "#ffffff",
+    };
+
+  const primaryColor = currentDivision.primary_color || "#000000";
+  const secondaryColor = currentDivision.secondary_color || "#ffffff";
+  const textColor = currentDivision.text_color || "#ffffff";
 
   const table: any = {};
 
@@ -143,20 +153,46 @@ export default async function Home({
         fontFamily: "Arial",
         maxWidth: "1100px",
         margin: "0 auto",
-        background: "#ffffff",
+        background: secondaryColor,
         color: "#000000",
         minHeight: "100vh",
       }}
     >
-      <h1 style={{ fontSize: "28px", marginBottom: "10px" }}>{currentDivision}</h1>
+      {currentDivision.logo_url && (
+        <div style={{ textAlign: "center", marginBottom: "18px" }}>
+          <img
+            src={currentDivision.logo_url}
+            alt={`${currentDivision.name} sponsor logo`}
+            style={{
+              maxWidth: "220px",
+              maxHeight: "110px",
+              objectFit: "contain",
+            }}
+          />
+        </div>
+      )}
+
+      <h1
+        style={{
+          fontSize: "28px",
+          marginBottom: "12px",
+          textAlign: "center",
+          background: primaryColor,
+          color: textColor,
+          padding: "16px",
+          borderRadius: "10px",
+        }}
+      >
+        {currentDivision.name}
+      </h1>
 
       <div
         style={{
           display: "flex",
           gap: "8px",
           overflowX: "auto",
-          marginBottom: "20px",
-          paddingBottom: "6px",
+          marginBottom: "22px",
+          paddingBottom: "8px",
         }}
       >
         {divisions?.map((division: any) => {
@@ -172,9 +208,9 @@ export default async function Home({
                 textDecoration: "none",
                 whiteSpace: "nowrap",
                 fontWeight: "bold",
-                background: active ? "#000000" : "#f1f1f1",
-                color: active ? "#ffffff" : "#000000",
-                border: active ? "1px solid #000000" : "1px solid #ddd",
+                background: active ? primaryColor : "#f1f1f1",
+                color: active ? textColor : "#000000",
+                border: active ? `1px solid ${primaryColor}` : "1px solid #ddd",
               }}
             >
               {division.name}
@@ -183,39 +219,49 @@ export default async function Home({
         })}
       </div>
 
-      <h2>League Table</h2>
+      <h2 style={{ marginBottom: "10px" }}>League Table</h2>
 
-      <div style={{ overflowX: "auto", marginBottom: "30px" }}>
+      <div
+        style={{
+          overflowX: "auto",
+          marginBottom: "30px",
+          border: `2px solid ${primaryColor}`,
+          borderRadius: "10px",
+          background: "#ffffff",
+        }}
+      >
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead>
-            <tr style={{ borderBottom: "2px solid black" }}>
-              <th style={{ textAlign: "left", padding: "8px" }}>Team</th>
-              <th>P</th>
-              <th>W</th>
-              <th>L</th>
-              <th>GD</th>
-              <th>Pts</th>
+            <tr style={{ background: primaryColor, color: textColor }}>
+              <th style={{ textAlign: "left", padding: "12px" }}>Team</th>
+              <th style={{ padding: "12px" }}>P</th>
+              <th style={{ padding: "12px" }}>W</th>
+              <th style={{ padding: "12px" }}>L</th>
+              <th style={{ padding: "12px" }}>GD</th>
+              <th style={{ padding: "12px" }}>Pts</th>
             </tr>
           </thead>
 
           <tbody>
             {leagueTable.map((team: any) => (
-              <tr key={team.id} style={{ borderBottom: "1px solid #ddd" }}>
-                <td style={{ padding: "8px", fontWeight: "bold" }}>{team.name}</td>
-                <td style={{ textAlign: "center" }}>{team.played}</td>
-                <td style={{ textAlign: "center" }}>{team.won}</td>
-                <td style={{ textAlign: "center" }}>{team.lost}</td>
-                <td style={{ textAlign: "center", fontWeight: "bold" }}>
+              <tr key={team.id} style={{ borderBottom: `1px solid ${primaryColor}` }}>
+                <td style={{ padding: "12px", fontWeight: "bold" }}>{team.name}</td>
+                <td style={{ padding: "12px", textAlign: "center" }}>{team.played}</td>
+                <td style={{ padding: "12px", textAlign: "center" }}>{team.won}</td>
+                <td style={{ padding: "12px", textAlign: "center" }}>{team.lost}</td>
+                <td style={{ padding: "12px", textAlign: "center", fontWeight: "bold" }}>
                   {team.goal_difference > 0 ? `+${team.goal_difference}` : team.goal_difference}
                 </td>
-                <td style={{ textAlign: "center", fontWeight: "bold" }}>{team.points}</td>
+                <td style={{ padding: "12px", textAlign: "center", fontWeight: "bold" }}>
+                  {team.points}
+                </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
 
-      <h2>Fixtures</h2>
+      <h2 style={{ marginBottom: "10px" }}>Fixtures</h2>
 
       <div style={{ display: "grid", gap: "14px" }}>
         {fixtures?.length === 0 && (
@@ -226,7 +272,7 @@ export default async function Home({
           <div
             key={fixture.id}
             style={{
-              border: "1px solid #ddd",
+              border: `2px solid ${primaryColor}`,
               borderRadius: "12px",
               padding: "14px",
               background: "#ffffff",
@@ -254,7 +300,7 @@ export default async function Home({
               <div style={{ textAlign: "center" }}>
                 {fixture.played ? (
                   <>
-                    <div style={{ fontSize: "22px", fontWeight: "bold", color: "#000" }}>
+                    <div style={{ fontSize: "22px", fontWeight: "bold", color: primaryColor }}>
                       {fixture.home_score} - {fixture.away_score}
                     </div>
                     <div style={{ fontSize: "13px", color: "#444" }}>
@@ -319,7 +365,18 @@ export default async function Home({
                 ))}
               </div>
 
-              <button type="submit" style={buttonStyle}>
+              <button
+                type="submit"
+                style={{
+                  width: "100%",
+                  padding: "12px",
+                  background: primaryColor,
+                  color: textColor,
+                  fontWeight: "bold",
+                  borderRadius: "8px",
+                  border: "none",
+                }}
+              >
                 Save Result
               </button>
             </form>
@@ -338,14 +395,4 @@ const inputStyle = {
   borderRadius: "6px",
   color: "#000000",
   background: "#ffffff",
-};
-
-const buttonStyle = {
-  width: "100%",
-  padding: "12px",
-  background: "#000000",
-  color: "#ffffff",
-  fontWeight: "bold",
-  borderRadius: "8px",
-  border: "none",
 };
