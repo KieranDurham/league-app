@@ -67,8 +67,7 @@ export default async function Home({
     .from("fixtures")
     .select("*")
     .eq("division_id", selectedDivisionId)
-    .order("round", { ascending: true })
-    .order("fixture_date", { ascending: true });
+    .order("round", { ascending: true });
 
   const currentDivision =
     divisions?.find((d: any) => d.id === selectedDivisionId) || {};
@@ -102,10 +101,14 @@ export default async function Home({
     away.played++;
 
     const homeGames =
-      (f.home_set1 || 0) + (f.home_set2 || 0) + (f.home_set3 || 0);
+      (f.home_set1 || 0) +
+      (f.home_set2 || 0) +
+      (f.home_set3 || 0);
 
     const awayGames =
-      (f.away_set1 || 0) + (f.away_set2 || 0) + (f.away_set3 || 0);
+      (f.away_set1 || 0) +
+      (f.away_set2 || 0) +
+      (f.away_set3 || 0);
 
     home.goal_difference += homeGames - awayGames;
     away.goal_difference += awayGames - homeGames;
@@ -123,9 +126,8 @@ export default async function Home({
 
   const league = Object.values(table).sort((a: any, b: any) => {
     if (b.points !== a.points) return b.points - a.points;
-    if (b.goal_difference !== a.goal_difference) {
+    if (b.goal_difference !== a.goal_difference)
       return b.goal_difference - a.goal_difference;
-    }
     return b.won - a.won;
   });
 
@@ -161,16 +163,6 @@ export default async function Home({
         fontFamily: "Arial",
       }}
     >
-      {currentDivision.logo_url && (
-        <div style={{ display: "flex", justifyContent: "center", marginBottom: "16px" }}>
-          <img
-            src={currentDivision.logo_url}
-            alt="logo"
-            style={{ maxWidth: "160px", width: "100%" }}
-          />
-        </div>
-      )}
-
       <h1
         style={{
           background: primary,
@@ -183,81 +175,7 @@ export default async function Home({
         {currentDivision.name}
       </h1>
 
-      <div style={{ display: "flex", gap: "8px", overflowX: "auto", margin: "12px 0" }}>
-        {divisions?.map((d: any) => (
-          <a
-            key={d.id}
-            href={`/?division=${d.id}`}
-            style={{
-              padding: "8px 12px",
-              borderRadius: "20px",
-              background: d.id === selectedDivisionId ? primary : "#eeeeee",
-              color: d.id === selectedDivisionId ? textColor : "#000000",
-              textDecoration: "none",
-              whiteSpace: "nowrap",
-              fontWeight: "bold",
-            }}
-          >
-            {d.name}
-          </a>
-        ))}
-      </div>
-
-      <h2 style={{ color: "#000000" }}>League Table</h2>
-
-      <div
-        style={{
-          overflowX: "auto",
-          border: `2px solid ${primary}`,
-          borderRadius: "10px",
-          background: "#ffffff",
-          marginBottom: "26px",
-        }}
-      >
-        <table
-          style={{
-            width: "100%",
-            borderCollapse: "collapse",
-            color: "#000000",
-          }}
-        >
-          <thead style={{ background: primary, color: textColor }}>
-            <tr>
-              <th style={{ padding: "10px", textAlign: "left" }}>Team</th>
-              <th style={{ padding: "10px" }}>P</th>
-              <th style={{ padding: "10px" }}>W</th>
-              <th style={{ padding: "10px" }}>L</th>
-              <th style={{ padding: "10px" }}>GD</th>
-              <th style={{ padding: "10px" }}>Pts</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {league.map((t: any) => (
-              <tr key={t.id} style={{ borderBottom: `1px solid ${primary}` }}>
-                <td style={{ padding: "10px", fontWeight: "bold", color: "#000000" }}>
-                  {t.name}
-                </td>
-                <td style={{ textAlign: "center", color: "#000000" }}>{t.played}</td>
-                <td style={{ textAlign: "center", color: "#000000" }}>{t.won}</td>
-                <td style={{ textAlign: "center", color: "#000000" }}>{t.lost}</td>
-                <td style={{ textAlign: "center", color: "#000000", fontWeight: "bold" }}>
-                  {t.goal_difference > 0 ? `+${t.goal_difference}` : t.goal_difference}
-                </td>
-                <td style={{ textAlign: "center", color: "#000000", fontWeight: "bold" }}>
-                  {t.points}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      <h2 style={{ marginTop: "20px", color: "#000000" }}>Fixtures</h2>
-
-      {fixtures?.length === 0 && (
-        <p style={{ color: "#222222", fontWeight: "500" }}>No fixtures added.</p>
-      )}
+      <h2 style={{ marginTop: "20px" }}>Fixtures</h2>
 
       {Object.entries(groupedFixtures).map(([round, roundFixtures]: any) => (
         <div key={round}>
@@ -265,9 +183,8 @@ export default async function Home({
             style={{
               background: primary,
               color: textColor,
-              padding: "8px 12px",
-              borderRadius: "8px",
-              marginTop: "14px",
+              padding: "8px",
+              borderRadius: "6px",
             }}
           >
             Round {round}
@@ -277,142 +194,49 @@ export default async function Home({
             <div
               key={f.id}
               style={{
-                border: `2px solid ${primary}`,
-                padding: "12px",
+                border: `1px solid ${primary}`,
+                padding: "10px",
                 borderRadius: "10px",
-                marginBottom: "12px",
-                background: "#ffffff",
-                color: "#000000",
+                marginBottom: "10px",
+                background: "#fff",
               }}
             >
-              <div
-                style={{
-                  marginBottom: "8px",
-                  color: "#222222",
-                  fontWeight: "500",
-                }}
-              >
-                {f.fixture_date || "TBC"}
-              </div>
+              <div style={{ display: "flex", justifyContent: "space-between" }}>
+                <strong>{getName(f.home_team_id)}</strong>
 
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "1fr auto 1fr",
-                  gap: "8px",
-                  alignItems: "center",
-                  marginBottom: "10px",
-                }}
-              >
-                <strong style={{ color: "#111111", fontSize: "15px" }}>
-                  {getName(f.home_team_id)}
-                </strong>
-
-                <div
-                  style={{
-                    color: "#000000",
-                    fontWeight: "bold",
-                    textAlign: "center",
-                    minWidth: "55px",
-                  }}
-                >
+                <div>
                   {f.played ? `${f.home_score} - ${f.away_score}` : "vs"}
                 </div>
 
-                <strong
-                  style={{
-                    color: "#111111",
-                    fontSize: "15px",
-                    textAlign: "right",
-                  }}
-                >
-                  {getName(f.away_team_id)}
-                </strong>
+                <strong>{getName(f.away_team_id)}</strong>
               </div>
 
-              {f.played && (
-                <div
-                  style={{
-                    textAlign: "center",
-                    fontSize: "13px",
-                    color: "#333333",
-                    marginBottom: "10px",
-                    fontWeight: "500",
-                  }}
-                >
-                  {f.home_set1}-{f.away_set1} | {f.home_set2}-{f.away_set2} |{" "}
-                  {f.home_set3}-{f.away_set3}
-                </div>
-              )}
-
               {!f.played && (
-                <form action={submitScore} style={{ marginTop: "10px" }}>
+                <form action={submitScore}>
                   <input type="hidden" name="fixture_id" value={f.id} />
                   <input type="hidden" name="division_id" value={selectedDivisionId} />
 
                   {[1, 2, 3].map((s) => (
-                    <div key={s} style={{ marginBottom: "8px" }}>
-                      <div
-                        style={{
-                          fontSize: "13px",
-                          fontWeight: "bold",
-                          color: "#222222",
-                          marginBottom: "4px",
-                        }}
-                      >
-                        Set {s}
-                      </div>
-
-                      <div style={{ display: "flex", gap: "8px" }}>
-                        <input
-                          name={`home_set${s}`}
-                          type="number"
-                          placeholder="Home"
-                          required
-                          style={inputStyle}
-                        />
-
-                        <input
-                          name={`away_set${s}`}
-                          type="number"
-                          placeholder="Away"
-                          required
-                          style={inputStyle}
-                        />
-                      </div>
+                    <div key={s} style={{ display: "flex", gap: "5px", marginTop: "5px" }}>
+                      <input name={`home_set${s}`} type="number" style={inputStyle} required />
+                      <input name={`away_set${s}`} type="number" style={inputStyle} required />
                     </div>
                   ))}
 
                   <button
-                    type="submit"
                     style={{
                       width: "100%",
+                      marginTop: "8px",
+                      padding: "10px",
                       background: primary,
                       color: textColor,
-                      padding: "12px",
-                      borderRadius: "8px",
                       border: "none",
-                      marginTop: "6px",
-                      fontWeight: "bold",
-                      fontSize: "16px",
+                      borderRadius: "6px",
                     }}
                   >
-                    Save Result
+                    Save
                   </button>
                 </form>
-              )}
-
-              {f.played && (
-                <div
-                  style={{
-                    textAlign: "center",
-                    color: primary,
-                    fontWeight: "bold",
-                    marginTop: "8px",
-                  }}
-                >
-                  Result submitted
-                </div>
               )}
             </div>
           ))}
