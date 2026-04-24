@@ -1,6 +1,9 @@
 import { supabase } from "@/lib/supabase";
 import { revalidatePath } from "next/cache";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 async function submitScore(formData: FormData) {
   "use server";
 
@@ -46,9 +49,10 @@ async function submitScore(formData: FormData) {
 export default async function Home({
   searchParams,
 }: {
-  searchParams?: { division?: string };
+  searchParams?: Promise<{ division?: string }>;
 }) {
-  const selectedDivisionId = Number(searchParams?.division || 1);
+  const params = await searchParams;
+  const selectedDivisionId = Number(params?.division || 1);
 
   const { data: divisions } = await supabase
     .from("divisions")
@@ -214,6 +218,10 @@ export default async function Home({
       <h2>Fixtures</h2>
 
       <div style={{ display: "grid", gap: "14px" }}>
+        {fixtures?.length === 0 && (
+          <p style={{ color: "#666" }}>No fixtures added for this division yet.</p>
+        )}
+
         {fixtures?.map((fixture: any) => (
           <div
             key={fixture.id}
