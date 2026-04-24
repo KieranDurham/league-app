@@ -122,155 +122,198 @@ export default async function Home() {
   };
 
   return (
-    <main style={{ padding: "20px", fontFamily: "Arial" }}>
-      <h1>Division 1</h1>
+    <main style={{ padding: "14px", fontFamily: "Arial", maxWidth: "1100px", margin: "0 auto" }}>
+      <h1 style={{ fontSize: "28px", marginBottom: "10px" }}>Division 1</h1>
 
       <h2>League Table</h2>
 
-      <table style={{ borderCollapse: "collapse", width: "750px", marginBottom: "40px" }}>
-        <thead>
-          <tr style={{ borderBottom: "2px solid black" }}>
-            <th style={{ textAlign: "left", padding: "8px" }}>Team</th>
-            <th style={{ padding: "8px" }}>P</th>
-            <th style={{ padding: "8px" }}>W</th>
-            <th style={{ padding: "8px" }}>L</th>
-            <th style={{ padding: "8px" }}>GD</th>
-            <th style={{ padding: "8px" }}>Pts</th>
-          </tr>
-        </thead>
-
-        <tbody>
-          {leagueTable.map((team: any) => (
-            <tr key={team.id} style={{ borderBottom: "1px solid #ccc" }}>
-              <td style={{ padding: "8px" }}>{team.name}</td>
-              <td style={{ padding: "8px", textAlign: "center" }}>{team.played}</td>
-              <td style={{ padding: "8px", textAlign: "center" }}>{team.won}</td>
-              <td style={{ padding: "8px", textAlign: "center" }}>{team.lost}</td>
-              <td style={{ padding: "8px", textAlign: "center" }}>
-                {team.goal_difference > 0
-                  ? `+${team.goal_difference}`
-                  : team.goal_difference}
-              </td>
-              <td style={{ padding: "8px", textAlign: "center", fontWeight: "bold" }}>
-                {team.points}
-              </td>
+      <div style={{ overflowX: "auto", marginBottom: "35px" }}>
+        <table style={{ borderCollapse: "collapse", width: "100%", minWidth: "500px" }}>
+          <thead>
+            <tr style={{ borderBottom: "2px solid black" }}>
+              <th style={{ textAlign: "left", padding: "8px" }}>Team</th>
+              <th style={{ padding: "8px" }}>P</th>
+              <th style={{ padding: "8px" }}>W</th>
+              <th style={{ padding: "8px" }}>L</th>
+              <th style={{ padding: "8px" }}>GD</th>
+              <th style={{ padding: "8px" }}>Pts</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+
+          <tbody>
+            {leagueTable.map((team: any) => (
+              <tr key={team.id} style={{ borderBottom: "1px solid #ddd" }}>
+                <td style={{ padding: "8px", fontWeight: "bold" }}>{team.name}</td>
+                <td style={{ padding: "8px", textAlign: "center" }}>{team.played}</td>
+                <td style={{ padding: "8px", textAlign: "center" }}>{team.won}</td>
+                <td style={{ padding: "8px", textAlign: "center" }}>{team.lost}</td>
+                <td style={{ padding: "8px", textAlign: "center" }}>
+                  {team.goal_difference > 0 ? `+${team.goal_difference}` : team.goal_difference}
+                </td>
+                <td style={{ padding: "8px", textAlign: "center", fontWeight: "bold" }}>
+                  {team.points}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
       <h2>Fixtures</h2>
 
-      <table style={{ borderCollapse: "collapse", width: "1100px" }}>
-        <thead>
-          <tr style={{ borderBottom: "2px solid black" }}>
-            <th style={{ textAlign: "left", padding: "8px" }}>Date</th>
-            <th style={{ textAlign: "left", padding: "8px" }}>Home</th>
-            <th style={{ padding: "8px" }}>Result</th>
-            <th style={{ textAlign: "left", padding: "8px" }}>Away</th>
-            <th style={{ padding: "8px" }}>Enter 3 Set Scores</th>
-          </tr>
-        </thead>
+      <div style={{ display: "grid", gap: "14px" }}>
+        {fixtures?.map((fixture: any) => (
+          <div
+            key={fixture.id}
+            style={{
+              border: "1px solid #ddd",
+              borderRadius: "12px",
+              padding: "14px",
+              boxShadow: "0 2px 6px rgba(0,0,0,0.08)",
+              background: "white",
+            }}
+          >
+            <div style={{ fontSize: "13px", color: "#666", marginBottom: "8px" }}>
+              {fixture.fixture_date || "TBC"}
+            </div>
 
-        <tbody>
-          {fixtures?.map((fixture: any) => (
-            <tr key={fixture.id} style={{ borderBottom: "1px solid #ccc" }}>
-              <td style={{ padding: "8px" }}>{fixture.fixture_date || "TBC"}</td>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr auto 1fr",
+                alignItems: "center",
+                gap: "10px",
+                marginBottom: "12px",
+              }}
+            >
+              <div style={{ fontWeight: "bold", textAlign: "left" }}>
+                {getTeamName(fixture.home_team_id)}
+              </div>
 
-              <td style={{ padding: "8px" }}>{getTeamName(fixture.home_team_id)}</td>
-
-              <td style={{ padding: "8px", textAlign: "center" }}>
+              <div style={{ textAlign: "center", minWidth: "70px" }}>
                 {fixture.played ? (
-                  <div>
-                    <strong>
+                  <>
+                    <div style={{ fontWeight: "bold", fontSize: "20px" }}>
                       {fixture.home_score} - {fixture.away_score}
-                    </strong>
+                    </div>
                     <div style={{ fontSize: "12px", color: "#666", marginTop: "3px" }}>
                       {fixture.home_set1}-{fixture.away_set1} | {fixture.home_set2}-
                       {fixture.away_set2} | {fixture.home_set3}-{fixture.away_set3}
                     </div>
-                  </div>
+                  </>
                 ) : (
                   <strong>vs</strong>
                 )}
-              </td>
+              </div>
 
-              <td style={{ padding: "8px" }}>{getTeamName(fixture.away_team_id)}</td>
+              <div style={{ fontWeight: "bold", textAlign: "right" }}>
+                {getTeamName(fixture.away_team_id)}
+              </div>
+            </div>
 
-              <td style={{ padding: "8px" }}>
-                <form
-                  action={submitScore}
-                  style={{ display: "flex", gap: "5px", alignItems: "center" }}
-                >
-                  <input type="hidden" name="fixture_id" value={fixture.id} />
+            <form action={submitScore}>
+              <input type="hidden" name="fixture_id" value={fixture.id} />
 
-                  <input
-                    type="number"
-                    name="home_set1"
-                    placeholder="H1"
-                    defaultValue={fixture.home_set1 ?? ""}
-                    required
-                    style={{ width: "45px", padding: "4px" }}
-                  />
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr 1fr 1fr",
+                  gap: "8px",
+                  marginBottom: "10px",
+                }}
+              >
+                <div>
+                  <div style={{ fontSize: "12px", marginBottom: "4px", fontWeight: "bold" }}>
+                    Set 1
+                  </div>
+                  <div style={{ display: "flex", gap: "6px" }}>
+                    <input
+                      type="number"
+                      name="home_set1"
+                      placeholder="H"
+                      defaultValue={fixture.home_set1 ?? ""}
+                      required
+                      style={{ width: "100%", padding: "9px", fontSize: "16px" }}
+                    />
+                    <input
+                      type="number"
+                      name="away_set1"
+                      placeholder="A"
+                      defaultValue={fixture.away_set1 ?? ""}
+                      required
+                      style={{ width: "100%", padding: "9px", fontSize: "16px" }}
+                    />
+                  </div>
+                </div>
 
-                  <input
-                    type="number"
-                    name="away_set1"
-                    placeholder="A1"
-                    defaultValue={fixture.away_set1 ?? ""}
-                    required
-                    style={{ width: "45px", padding: "4px" }}
-                  />
+                <div>
+                  <div style={{ fontSize: "12px", marginBottom: "4px", fontWeight: "bold" }}>
+                    Set 2
+                  </div>
+                  <div style={{ display: "flex", gap: "6px" }}>
+                    <input
+                      type="number"
+                      name="home_set2"
+                      placeholder="H"
+                      defaultValue={fixture.home_set2 ?? ""}
+                      required
+                      style={{ width: "100%", padding: "9px", fontSize: "16px" }}
+                    />
+                    <input
+                      type="number"
+                      name="away_set2"
+                      placeholder="A"
+                      defaultValue={fixture.away_set2 ?? ""}
+                      required
+                      style={{ width: "100%", padding: "9px", fontSize: "16px" }}
+                    />
+                  </div>
+                </div>
 
-                  <span>|</span>
+                <div>
+                  <div style={{ fontSize: "12px", marginBottom: "4px", fontWeight: "bold" }}>
+                    Set 3
+                  </div>
+                  <div style={{ display: "flex", gap: "6px" }}>
+                    <input
+                      type="number"
+                      name="home_set3"
+                      placeholder="H"
+                      defaultValue={fixture.home_set3 ?? ""}
+                      required
+                      style={{ width: "100%", padding: "9px", fontSize: "16px" }}
+                    />
+                    <input
+                      type="number"
+                      name="away_set3"
+                      placeholder="A"
+                      defaultValue={fixture.away_set3 ?? ""}
+                      required
+                      style={{ width: "100%", padding: "9px", fontSize: "16px" }}
+                    />
+                  </div>
+                </div>
+              </div>
 
-                  <input
-                    type="number"
-                    name="home_set2"
-                    placeholder="H2"
-                    defaultValue={fixture.home_set2 ?? ""}
-                    required
-                    style={{ width: "45px", padding: "4px" }}
-                  />
-
-                  <input
-                    type="number"
-                    name="away_set2"
-                    placeholder="A2"
-                    defaultValue={fixture.away_set2 ?? ""}
-                    required
-                    style={{ width: "45px", padding: "4px" }}
-                  />
-
-                  <span>|</span>
-
-                  <input
-                    type="number"
-                    name="home_set3"
-                    placeholder="H3"
-                    defaultValue={fixture.home_set3 ?? ""}
-                    required
-                    style={{ width: "45px", padding: "4px" }}
-                  />
-
-                  <input
-                    type="number"
-                    name="away_set3"
-                    placeholder="A3"
-                    defaultValue={fixture.away_set3 ?? ""}
-                    required
-                    style={{ width: "45px", padding: "4px" }}
-                  />
-
-                  <button type="submit" style={{ padding: "5px 10px" }}>
-                    Save
-                  </button>
-                </form>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+              <button
+                type="submit"
+                style={{
+                  width: "100%",
+                  padding: "11px",
+                  fontSize: "16px",
+                  fontWeight: "bold",
+                  borderRadius: "8px",
+                  border: "none",
+                  background: "black",
+                  color: "white",
+                }}
+              >
+                Save Result
+              </button>
+            </form>
+          </div>
+        ))}
+      </div>
     </main>
   );
 }
