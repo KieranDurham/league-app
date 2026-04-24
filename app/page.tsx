@@ -2,7 +2,6 @@ import { supabase } from "@/lib/supabase";
 import { revalidatePath } from "next/cache";
 
 export const dynamic = "force-dynamic";
-export const revalidate = 0;
 
 async function submitScore(formData: FormData) {
   "use server";
@@ -57,7 +56,7 @@ export default async function Home({
   const { data: divisions } = await supabase
     .from("divisions")
     .select("*")
-    .order("id", { ascending: true });
+    .order("id");
 
   const { data: teams } = await supabase
     .from("teams")
@@ -68,28 +67,20 @@ export default async function Home({
     .from("fixtures")
     .select("*")
     .eq("division_id", selectedDivisionId)
-    .order("fixture_date", { ascending: true });
+    .order("fixture_date");
 
-  const currentDivision: any =
-    divisions?.find((division: any) => division.id === selectedDivisionId) || {
-      id: selectedDivisionId,
-      name: `Division ${selectedDivisionId}`,
-      logo_url: "",
-      primary_color: "#000000",
-      secondary_color: "#ffffff",
-      text_color: "#ffffff",
-    };
+  const currentDivision =
+    divisions?.find((d: any) => d.id === selectedDivisionId) || {};
 
-  const primaryColor = currentDivision.primary_color || "#000000";
-  const secondaryColor = currentDivision.secondary_color || "#ffffff";
-  const textColor = currentDivision.text_color || "#ffffff";
+  const primary = currentDivision.primary_color || "#000";
+  const secondary = currentDivision.secondary_color || "#fff";
+  const textColor = currentDivision.text_color || "#fff";
 
   const table: any = {};
 
-  teams?.forEach((team: any) => {
-    table[team.id] = {
-      id: team.id,
-      name: team.name,
+  teams?.forEach((t: any) => {
+    table[t.id] = {
+      ...t,
       played: 0,
       won: 0,
       lost: 0,
@@ -98,301 +89,187 @@ export default async function Home({
     };
   });
 
-  fixtures?.forEach((fixture: any) => {
-    if (!fixture.played) return;
+  fixtures?.forEach((f: any) => {
+    if (!f.played) return;
 
-    const home = table[fixture.home_team_id];
-    const away = table[fixture.away_team_id];
-
-    if (!home || !away) return;
+    const home = table[f.home_team_id];
+    const away = table[f.away_team_id];
 
     home.played++;
     away.played++;
 
-    const homeTotal =
-      (fixture.home_set1 || 0) +
-      (fixture.home_set2 || 0) +
-      (fixture.home_set3 || 0);
+    const homeGames = (f.home_set1 || 0) + (f.home_set2 || 0) + (f.home_set3 || 0);
+    const awayGames = (f.away_set1 || 0) + (f.away_set2 || 0) + (f.away_set3 || 0);
 
-    const awayTotal =
-      (fixture.away_set1 || 0) +
-      (fixture.away_set2 || 0) +
-      (fixture.away_set3 || 0);
+    home.goal_difference += homeGames - awayGames;
+    away.goal_difference += awayGames - homeGames;
 
-    home.goal_difference += homeTotal - awayTotal;
-    away.goal_difference += awayTotal - homeTotal;
-
-    if (fixture.home_score > fixture.away_score) {
+    if (f.home_score > f.away_score) {
       home.won++;
       away.lost++;
       home.points += 3;
-    } else if (fixture.away_score > fixture.home_score) {
+    } else {
       away.won++;
       home.lost++;
       away.points += 3;
     }
   });
 
-  const leagueTable = Object.values(table).sort((a: any, b: any) => {
+  const league = Object.values(table).sort((a: any, b: any) => {
     if (b.points !== a.points) return b.points - a.points;
-    if (b.goal_difference !== a.goal_difference) {
+    if (b.goal_difference !== a.goal_difference)
       return b.goal_difference - a.goal_difference;
-    }
-    if (b.won !== a.won) return b.won - a.won;
-    return a.name.localeCompare(b.name);
+    return b.won - a.won;
   });
 
-  const getTeamName = (id: number) => {
-    return teams?.find((team: any) => team.id === id)?.name || "Unknown";
-  };
+  const getName = (id: number) =>
+    teams?.find((t: any) => t.id === id)?.name;
 
   return (
     <main
       style={{
         padding: "14px",
-        fontFamily: "Arial",
-        maxWidth: "1100px",
+        maxWidth: "1000px",
         margin: "0 auto",
-        background: secondaryColor,
-        color: "#000000",
+        background: secondary,
         minHeight: "100vh",
       }}
     >
+      {/* LOGO */}
       {currentDivision.logo_url && (
-        <div style={{ textAlign: "center", marginBottom: "18px" }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            marginBottom: "16px",
+          }}
+        >
           <img
             src={currentDivision.logo_url}
-            alt={`${currentDivision.name} sponsor logo`}
             style={{
-              maxWidth: "220px",
-              maxHeight: "110px",
-              objectFit: "contain",
+              maxWidth: "180px",
+              width: "100%",
+              height: "auto",
             }}
           />
         </div>
       )}
 
+      {/* TITLE */}
       <h1
         style={{
-          fontSize: "28px",
-          marginBottom: "12px",
-          textAlign: "center",
-          background: primaryColor,
+          background: primary,
           color: textColor,
           padding: "16px",
           borderRadius: "10px",
+          textAlign: "center",
         }}
       >
         {currentDivision.name}
       </h1>
 
-      <div
-        style={{
-          display: "flex",
-          gap: "8px",
-          overflowX: "auto",
-          marginBottom: "22px",
-          paddingBottom: "8px",
-        }}
-      >
-        {divisions?.map((division: any) => {
-          const active = division.id === selectedDivisionId;
-
-          return (
-            <a
-              key={division.id}
-              href={`/?division=${division.id}`}
-              style={{
-                padding: "10px 14px",
-                borderRadius: "999px",
-                textDecoration: "none",
-                whiteSpace: "nowrap",
-                fontWeight: "bold",
-                background: active ? primaryColor : "#f1f1f1",
-                color: active ? textColor : "#000000",
-                border: active ? `1px solid ${primaryColor}` : "1px solid #ddd",
-              }}
-            >
-              {division.name}
-            </a>
-          );
-        })}
-      </div>
-
-      <h2 style={{ marginBottom: "10px" }}>League Table</h2>
-
-      <div
-        style={{
-          overflowX: "auto",
-          marginBottom: "30px",
-          border: `2px solid ${primaryColor}`,
-          borderRadius: "10px",
-          background: "#ffffff",
-        }}
-      >
-        <table style={{ width: "100%", borderCollapse: "collapse" }}>
-          <thead>
-            <tr style={{ background: primaryColor, color: textColor }}>
-              <th style={{ textAlign: "left", padding: "12px" }}>Team</th>
-              <th style={{ padding: "12px" }}>P</th>
-              <th style={{ padding: "12px" }}>W</th>
-              <th style={{ padding: "12px" }}>L</th>
-              <th style={{ padding: "12px" }}>GD</th>
-              <th style={{ padding: "12px" }}>Pts</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {leagueTable.map((team: any) => (
-              <tr key={team.id} style={{ borderBottom: `1px solid ${primaryColor}` }}>
-                <td style={{ padding: "12px", fontWeight: "bold" }}>{team.name}</td>
-                <td style={{ padding: "12px", textAlign: "center" }}>{team.played}</td>
-                <td style={{ padding: "12px", textAlign: "center" }}>{team.won}</td>
-                <td style={{ padding: "12px", textAlign: "center" }}>{team.lost}</td>
-                <td style={{ padding: "12px", textAlign: "center", fontWeight: "bold" }}>
-                  {team.goal_difference > 0 ? `+${team.goal_difference}` : team.goal_difference}
-                </td>
-                <td style={{ padding: "12px", textAlign: "center", fontWeight: "bold" }}>
-                  {team.points}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      <h2 style={{ marginBottom: "10px" }}>Fixtures</h2>
-
-      <div style={{ display: "grid", gap: "14px" }}>
-        {fixtures?.length === 0 && (
-          <p style={{ color: "#666" }}>No fixtures added for this division yet.</p>
-        )}
-
-        {fixtures?.map((fixture: any) => (
-          <div
-            key={fixture.id}
+      {/* DIVISION BUTTONS */}
+      <div style={{ display: "flex", gap: "8px", overflowX: "auto", margin: "12px 0" }}>
+        {divisions?.map((d: any) => (
+          <a
+            key={d.id}
+            href={`/?division=${d.id}`}
             style={{
-              border: `2px solid ${primaryColor}`,
-              borderRadius: "12px",
-              padding: "14px",
-              background: "#ffffff",
-              color: "#000000",
-              boxShadow: "0 2px 6px rgba(0,0,0,0.08)",
+              padding: "8px 12px",
+              borderRadius: "20px",
+              background: d.id === selectedDivisionId ? primary : "#eee",
+              color: d.id === selectedDivisionId ? textColor : "#000",
+              textDecoration: "none",
             }}
           >
-            <div style={{ fontSize: "13px", color: "#666", marginBottom: "8px" }}>
-              {fixture.fixture_date || "TBC"}
-            </div>
-
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "1fr auto 1fr",
-                alignItems: "center",
-                marginBottom: "10px",
-                gap: "8px",
-              }}
-            >
-              <div style={{ fontWeight: "bold", color: "#111" }}>
-                {getTeamName(fixture.home_team_id)}
-              </div>
-
-              <div style={{ textAlign: "center" }}>
-                {fixture.played ? (
-                  <>
-                    <div style={{ fontSize: "22px", fontWeight: "bold", color: primaryColor }}>
-                      {fixture.home_score} - {fixture.away_score}
-                    </div>
-                    <div style={{ fontSize: "13px", color: "#444" }}>
-                      {fixture.home_set1}-{fixture.away_set1} | {fixture.home_set2}-
-                      {fixture.away_set2} | {fixture.home_set3}-{fixture.away_set3}
-                    </div>
-                  </>
-                ) : (
-                  <strong style={{ color: "#666" }}>vs</strong>
-                )}
-              </div>
-
-              <div style={{ fontWeight: "bold", textAlign: "right", color: "#111" }}>
-                {getTeamName(fixture.away_team_id)}
-              </div>
-            </div>
-
-            <form action={submitScore}>
-              <input type="hidden" name="fixture_id" value={fixture.id} />
-
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "1fr 1fr 1fr",
-                  gap: "8px",
-                  marginBottom: "10px",
-                }}
-              >
-                {[1, 2, 3].map((set) => (
-                  <div key={set}>
-                    <div
-                      style={{
-                        fontSize: "12px",
-                        fontWeight: "bold",
-                        marginBottom: "4px",
-                        color: "#222",
-                      }}
-                    >
-                      Set {set}
-                    </div>
-
-                    <div style={{ display: "flex", gap: "5px" }}>
-                      <input
-                        type="number"
-                        name={`home_set${set}`}
-                        placeholder="H"
-                        defaultValue={fixture[`home_set${set}`] ?? ""}
-                        required
-                        style={inputStyle}
-                      />
-
-                      <input
-                        type="number"
-                        name={`away_set${set}`}
-                        placeholder="A"
-                        defaultValue={fixture[`away_set${set}`] ?? ""}
-                        required
-                        style={inputStyle}
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <button
-                type="submit"
-                style={{
-                  width: "100%",
-                  padding: "12px",
-                  background: primaryColor,
-                  color: textColor,
-                  fontWeight: "bold",
-                  borderRadius: "8px",
-                  border: "none",
-                }}
-              >
-                Save Result
-              </button>
-            </form>
-          </div>
+            {d.name}
+          </a>
         ))}
       </div>
+
+      {/* TABLE */}
+      <h2>League Table</h2>
+
+      <table style={{ width: "100%", borderCollapse: "collapse" }}>
+        <thead style={{ background: primary, color: textColor }}>
+          <tr>
+            <th style={{ padding: "10px", textAlign: "left" }}>Team</th>
+            <th>P</th>
+            <th>W</th>
+            <th>L</th>
+            <th>GD</th>
+            <th>Pts</th>
+          </tr>
+        </thead>
+        <tbody>
+          {league.map((t: any) => (
+            <tr key={t.id} style={{ borderBottom: "1px solid #ccc" }}>
+              <td style={{ padding: "10px" }}>{t.name}</td>
+              <td>{t.played}</td>
+              <td>{t.won}</td>
+              <td>{t.lost}</td>
+              <td>{t.goal_difference > 0 ? "+" + t.goal_difference : t.goal_difference}</td>
+              <td>{t.points}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      {/* FIXTURES */}
+      <h2 style={{ marginTop: "20px" }}>Fixtures</h2>
+
+      {fixtures?.length === 0 && <p>No fixtures added.</p>}
+
+      {fixtures?.map((f: any) => (
+        <div
+          key={f.id}
+          style={{
+            border: `1px solid ${primary}`,
+            padding: "10px",
+            borderRadius: "10px",
+            marginBottom: "10px",
+            background: "#fff",
+          }}
+        >
+          <div style={{ marginBottom: "6px" }}>{f.fixture_date}</div>
+
+          <div style={{ display: "flex", justifyContent: "space-between" }}>
+            <strong>{getName(f.home_team_id)}</strong>
+
+            <div>
+              {f.played ? `${f.home_score} - ${f.away_score}` : "vs"}
+            </div>
+
+            <strong>{getName(f.away_team_id)}</strong>
+          </div>
+
+          <form action={submitScore} style={{ marginTop: "10px" }}>
+            <input type="hidden" name="fixture_id" value={f.id} />
+
+            {[1, 2, 3].map((s) => (
+              <div key={s} style={{ display: "flex", gap: "5px", marginBottom: "4px" }}>
+                <input name={`home_set${s}`} type="number" placeholder="H" required />
+                <input name={`away_set${s}`} type="number" placeholder="A" required />
+              </div>
+            ))}
+
+            <button
+              type="submit"
+              style={{
+                width: "100%",
+                background: primary,
+                color: textColor,
+                padding: "10px",
+                borderRadius: "6px",
+                border: "none",
+                marginTop: "6px",
+              }}
+            >
+              Save Result
+            </button>
+          </form>
+        </div>
+      ))}
     </main>
   );
 }
-
-const inputStyle = {
-  width: "100%",
-  padding: "8px",
-  fontSize: "16px",
-  border: "1px solid #999",
-  borderRadius: "6px",
-  color: "#000000",
-  background: "#ffffff",
-};
