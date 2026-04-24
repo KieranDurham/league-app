@@ -43,13 +43,32 @@ async function submitScore(formData: FormData) {
   revalidatePath("/");
 }
 
-export default async function Home() {
-  const { data: teams } = await supabase.from("teams").select("*");
+export default async function Home({
+  searchParams,
+}: {
+  searchParams?: { division?: string };
+}) {
+  const selectedDivisionId = Number(searchParams?.division || 1);
+
+  const { data: divisions } = await supabase
+    .from("divisions")
+    .select("*")
+    .order("id", { ascending: true });
+
+  const { data: teams } = await supabase
+    .from("teams")
+    .select("*")
+    .eq("division_id", selectedDivisionId);
 
   const { data: fixtures } = await supabase
     .from("fixtures")
     .select("*")
+    .eq("division_id", selectedDivisionId)
     .order("fixture_date", { ascending: true });
+
+  const currentDivision =
+    divisions?.find((division: any) => division.id === selectedDivisionId)?.name ||
+    `Division ${selectedDivisionId}`;
 
   const table: any = {};
 
@@ -125,7 +144,40 @@ export default async function Home() {
         minHeight: "100vh",
       }}
     >
-      <h1 style={{ fontSize: "28px", marginBottom: "10px" }}>Division 1</h1>
+      <h1 style={{ fontSize: "28px", marginBottom: "10px" }}>{currentDivision}</h1>
+
+      <div
+        style={{
+          display: "flex",
+          gap: "8px",
+          overflowX: "auto",
+          marginBottom: "20px",
+          paddingBottom: "6px",
+        }}
+      >
+        {divisions?.map((division: any) => {
+          const active = division.id === selectedDivisionId;
+
+          return (
+            <a
+              key={division.id}
+              href={`/?division=${division.id}`}
+              style={{
+                padding: "10px 14px",
+                borderRadius: "999px",
+                textDecoration: "none",
+                whiteSpace: "nowrap",
+                fontWeight: "bold",
+                background: active ? "#000000" : "#f1f1f1",
+                color: active ? "#ffffff" : "#000000",
+                border: active ? "1px solid #000000" : "1px solid #ddd",
+              }}
+            >
+              {division.name}
+            </a>
+          );
+        })}
+      </div>
 
       <h2>League Table</h2>
 
