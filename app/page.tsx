@@ -1,65 +1,266 @@
-import Image from "next/image";
+import { supabase } from "@/lib/supabase";
+import { revalidatePath } from "next/cache";
 
-export default function Home() {
+async function submitScore(formData: FormData) {
+  "use server";
+
+  const fixtureId = Number(formData.get("fixture_id"));
+
+  const h1 = Number(formData.get("home_set1"));
+  const a1 = Number(formData.get("away_set1"));
+  const h2 = Number(formData.get("home_set2"));
+  const a2 = Number(formData.get("away_set2"));
+  const h3 = Number(formData.get("home_set3"));
+  const a3 = Number(formData.get("away_set3"));
+
+  let homeSets = 0;
+  let awaySets = 0;
+
+  if (h1 > a1) homeSets++;
+  else if (a1 > h1) awaySets++;
+
+  if (h2 > a2) homeSets++;
+  else if (a2 > h2) awaySets++;
+
+  if (h3 > a3) homeSets++;
+  else if (a3 > h3) awaySets++;
+
+  const { error } = await supabase
+    .from("fixtures")
+    .update({
+      home_set1: h1,
+      away_set1: a1,
+      home_set2: h2,
+      away_set2: a2,
+      home_set3: h3,
+      away_set3: a3,
+      home_score: homeSets,
+      away_score: awaySets,
+      played: true,
+    })
+    .eq("id", fixtureId);
+
+  if (error) {
+    console.error("Score save error:", error);
+    throw new Error(error.message);
+  }
+
+  revalidatePath("/");
+}
+
+export default async function Home() {
+  const { data: teams, error: teamsError } = await supabase.from("teams").select("*");
+
+  const { data: fixtures, error: fixturesError } = await supabase
+    .from("fixtures")
+    .select("*")
+    .order("fixture_date", { ascending: true });
+
+  if (teamsError) return <p>Error loading teams: {teamsError.message}</p>;
+  if (fixturesError) return <p>Error loading fixtures: {fixturesError.message}</p>;
+
+  const table: any = {};
+
+  teams?.forEach((team: any) => {
+    table[team.id] = {
+      id: team.id,
+      name: team.name,
+      played: 0,
+      won: 0,
+      lost: 0,
+      points: 0,
+      goal_difference: 0,
+    };
+  });
+
+  fixtures?.forEach((fixture: any) => {
+    if (!fixture.played) return;
+
+    const home = table[fixture.home_team_id];
+    const away = table[fixture.away_team_id];
+
+    if (!home || !away) return;
+
+    home.played += 1;
+    away.played += 1;
+
+    home.goal_difference += fixture.home_score - fixture.away_score;
+    away.goal_difference += fixture.away_score - fixture.home_score;
+
+    if (fixture.home_score > fixture.away_score) {
+      home.won += 1;
+      away.lost += 1;
+      home.points += 3;
+    } else if (fixture.away_score > fixture.home_score) {
+      away.won += 1;
+      home.lost += 1;
+      away.points += 3;
+    }
+  });
+
+  const leagueTable = Object.values(table).sort((a: any, b: any) => {
+    if (b.points !== a.points) return b.points - a.points;
+    if (b.goal_difference !== a.goal_difference) {
+      return b.goal_difference - a.goal_difference;
+    }
+    if (b.won !== a.won) return b.won - a.won;
+    return a.name.localeCompare(b.name);
+  });
+
+  const getTeamName = (id: number) => {
+    return teams?.find((team: any) => team.id === id)?.name || "Unknown team";
+  };
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+    <main style={{ padding: "20px", fontFamily: "Arial" }}>
+      <h1>Division 1</h1>
+
+      <h2>League Table</h2>
+
+      <table style={{ borderCollapse: "collapse", width: "750px", marginBottom: "40px" }}>
+        <thead>
+          <tr style={{ borderBottom: "2px solid black" }}>
+            <th style={{ textAlign: "left", padding: "8px" }}>Team</th>
+            <th style={{ padding: "8px" }}>P</th>
+            <th style={{ padding: "8px" }}>W</th>
+            <th style={{ padding: "8px" }}>L</th>
+            <th style={{ padding: "8px" }}>GD</th>
+            <th style={{ padding: "8px" }}>Pts</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {leagueTable.map((team: any) => (
+            <tr key={team.id} style={{ borderBottom: "1px solid #ccc" }}>
+              <td style={{ padding: "8px" }}>{team.name}</td>
+              <td style={{ padding: "8px", textAlign: "center" }}>{team.played}</td>
+              <td style={{ padding: "8px", textAlign: "center" }}>{team.won}</td>
+              <td style={{ padding: "8px", textAlign: "center" }}>{team.lost}</td>
+              <td style={{ padding: "8px", textAlign: "center" }}>
+                {team.goal_difference > 0
+                  ? `+${team.goal_difference}`
+                  : team.goal_difference}
+              </td>
+              <td style={{ padding: "8px", textAlign: "center", fontWeight: "bold" }}>
+                {team.points}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      <h2>Fixtures</h2>
+
+      <table style={{ borderCollapse: "collapse", width: "1100px" }}>
+        <thead>
+          <tr style={{ borderBottom: "2px solid black" }}>
+            <th style={{ textAlign: "left", padding: "8px" }}>Date</th>
+            <th style={{ textAlign: "left", padding: "8px" }}>Home</th>
+            <th style={{ padding: "8px" }}>Result</th>
+            <th style={{ textAlign: "left", padding: "8px" }}>Away</th>
+            <th style={{ padding: "8px" }}>Enter 3 Set Scores</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {fixtures?.map((fixture: any) => (
+            <tr key={fixture.id} style={{ borderBottom: "1px solid #ccc" }}>
+              <td style={{ padding: "8px" }}>{fixture.fixture_date || "TBC"}</td>
+
+              <td style={{ padding: "8px" }}>{getTeamName(fixture.home_team_id)}</td>
+
+              <td style={{ padding: "8px", textAlign: "center" }}>
+                {fixture.played ? (
+                  <div>
+                    <strong>
+                      {fixture.home_score} - {fixture.away_score}
+                    </strong>
+                    <div style={{ fontSize: "12px", color: "#666", marginTop: "3px" }}>
+                      {fixture.home_set1}-{fixture.away_set1} | {fixture.home_set2}-
+                      {fixture.away_set2} | {fixture.home_set3}-{fixture.away_set3}
+                    </div>
+                  </div>
+                ) : (
+                  <strong>vs</strong>
+                )}
+              </td>
+
+              <td style={{ padding: "8px" }}>{getTeamName(fixture.away_team_id)}</td>
+
+              <td style={{ padding: "8px" }}>
+                <form
+                  action={submitScore}
+                  style={{ display: "flex", gap: "5px", alignItems: "center" }}
+                >
+                  <input type="hidden" name="fixture_id" value={fixture.id} />
+
+                  <input
+                    type="number"
+                    name="home_set1"
+                    placeholder="H1"
+                    defaultValue={fixture.home_set1 ?? ""}
+                    required
+                    style={{ width: "45px", padding: "4px" }}
+                  />
+
+                  <input
+                    type="number"
+                    name="away_set1"
+                    placeholder="A1"
+                    defaultValue={fixture.away_set1 ?? ""}
+                    required
+                    style={{ width: "45px", padding: "4px" }}
+                  />
+
+                  <span>|</span>
+
+                  <input
+                    type="number"
+                    name="home_set2"
+                    placeholder="H2"
+                    defaultValue={fixture.home_set2 ?? ""}
+                    required
+                    style={{ width: "45px", padding: "4px" }}
+                  />
+
+                  <input
+                    type="number"
+                    name="away_set2"
+                    placeholder="A2"
+                    defaultValue={fixture.away_set2 ?? ""}
+                    required
+                    style={{ width: "45px", padding: "4px" }}
+                  />
+
+                  <span>|</span>
+
+                  <input
+                    type="number"
+                    name="home_set3"
+                    placeholder="H3"
+                    defaultValue={fixture.home_set3 ?? ""}
+                    required
+                    style={{ width: "45px", padding: "4px" }}
+                  />
+
+                  <input
+                    type="number"
+                    name="away_set3"
+                    placeholder="A3"
+                    defaultValue={fixture.away_set3 ?? ""}
+                    required
+                    style={{ width: "45px", padding: "4px" }}
+                  />
+
+                  <button type="submit" style={{ padding: "5px 10px" }}>
+                    Save
+                  </button>
+                </form>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </main>
   );
 }
