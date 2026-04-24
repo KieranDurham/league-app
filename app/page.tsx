@@ -16,9 +16,14 @@ async function submitScore(formData: FormData) {
   let homeSets = 0;
   let awaySets = 0;
 
-  if (h1 > a1) homeSets++; else if (a1 > h1) awaySets++;
-  if (h2 > a2) homeSets++; else if (a2 > h2) awaySets++;
-  if (h3 > a3) homeSets++; else if (a3 > h3) awaySets++;
+  if (h1 > a1) homeSets++;
+  else if (a1 > h1) awaySets++;
+
+  if (h2 > a2) homeSets++;
+  else if (a2 > h2) awaySets++;
+
+  if (h3 > a3) homeSets++;
+  else if (a3 > h3) awaySets++;
 
   await supabase
     .from("fixtures")
@@ -109,10 +114,19 @@ export default async function Home() {
   };
 
   return (
-    <main style={{ padding: "14px", fontFamily: "Arial", maxWidth: "1100px", margin: "0 auto" }}>
+    <main
+      style={{
+        padding: "14px",
+        fontFamily: "Arial",
+        maxWidth: "1100px",
+        margin: "0 auto",
+        background: "#ffffff",
+        color: "#000000",
+        minHeight: "100vh",
+      }}
+    >
       <h1 style={{ fontSize: "28px", marginBottom: "10px" }}>Division 1</h1>
 
-      {/* TABLE */}
       <h2>League Table</h2>
 
       <div style={{ overflowX: "auto", marginBottom: "30px" }}>
@@ -120,29 +134,31 @@ export default async function Home() {
           <thead>
             <tr style={{ borderBottom: "2px solid black" }}>
               <th style={{ textAlign: "left", padding: "8px" }}>Team</th>
-              <th>P</th><th>W</th><th>L</th><th>GD</th><th>Pts</th>
+              <th>P</th>
+              <th>W</th>
+              <th>L</th>
+              <th>GD</th>
+              <th>Pts</th>
             </tr>
           </thead>
+
           <tbody>
             {leagueTable.map((team: any) => (
               <tr key={team.id} style={{ borderBottom: "1px solid #ddd" }}>
-                <td style={{ padding: "8px", fontWeight: "bold", color: "#111" }}>
-                  {team.name}
-                </td>
-                <td>{team.played}</td>
-                <td>{team.won}</td>
-                <td>{team.lost}</td>
-                <td style={{ fontWeight: "bold", color: "#333" }}>
+                <td style={{ padding: "8px", fontWeight: "bold" }}>{team.name}</td>
+                <td style={{ textAlign: "center" }}>{team.played}</td>
+                <td style={{ textAlign: "center" }}>{team.won}</td>
+                <td style={{ textAlign: "center" }}>{team.lost}</td>
+                <td style={{ textAlign: "center", fontWeight: "bold" }}>
                   {team.goal_difference > 0 ? `+${team.goal_difference}` : team.goal_difference}
                 </td>
-                <td style={{ fontWeight: "bold" }}>{team.points}</td>
+                <td style={{ textAlign: "center", fontWeight: "bold" }}>{team.points}</td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
 
-      {/* FIXTURES */}
       <h2>Fixtures</h2>
 
       <div style={{ display: "grid", gap: "14px" }}>
@@ -153,21 +169,24 @@ export default async function Home() {
               border: "1px solid #ddd",
               borderRadius: "12px",
               padding: "14px",
-              background: "white",
-              boxShadow: "0 2px 6px rgba(0,0,0,0.08)"
+              background: "#ffffff",
+              color: "#000000",
+              boxShadow: "0 2px 6px rgba(0,0,0,0.08)",
             }}
           >
             <div style={{ fontSize: "13px", color: "#666", marginBottom: "8px" }}>
-              {fixture.fixture_date}
+              {fixture.fixture_date || "TBC"}
             </div>
 
-            {/* TEAMS */}
-            <div style={{
-              display: "grid",
-              gridTemplateColumns: "1fr auto 1fr",
-              alignItems: "center",
-              marginBottom: "10px"
-            }}>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr auto 1fr",
+                alignItems: "center",
+                marginBottom: "10px",
+                gap: "8px",
+              }}
+            >
               <div style={{ fontWeight: "bold", color: "#111" }}>
                 {getTeamName(fixture.home_team_id)}
               </div>
@@ -179,7 +198,8 @@ export default async function Home() {
                       {fixture.home_score} - {fixture.away_score}
                     </div>
                     <div style={{ fontSize: "13px", color: "#444" }}>
-                      {fixture.home_set1}-{fixture.away_set1} | {fixture.home_set2}-{fixture.away_set2} | {fixture.home_set3}-{fixture.away_set3}
+                      {fixture.home_set1}-{fixture.away_set1} | {fixture.home_set2}-
+                      {fixture.away_set2} | {fixture.home_set3}-{fixture.away_set3}
                     </div>
                   </>
                 ) : (
@@ -192,30 +212,56 @@ export default async function Home() {
               </div>
             </div>
 
-            {/* INPUTS */}
             <form action={submitScore}>
               <input type="hidden" name="fixture_id" value={fixture.id} />
 
-              <div style={{
-                display: "grid",
-                gridTemplateColumns: "1fr 1fr 1fr",
-                gap: "8px",
-                marginBottom: "10px"
-              }}>
-                {[1,2,3].map((set) => (
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr 1fr 1fr",
+                  gap: "8px",
+                  marginBottom: "10px",
+                }}
+              >
+                {[1, 2, 3].map((set) => (
                   <div key={set}>
-                    <div style={{ fontSize: "12px", fontWeight: "bold", marginBottom: "4px", color: "#222" }}>
+                    <div
+                      style={{
+                        fontSize: "12px",
+                        fontWeight: "bold",
+                        marginBottom: "4px",
+                        color: "#222",
+                      }}
+                    >
                       Set {set}
                     </div>
+
                     <div style={{ display: "flex", gap: "5px" }}>
-                      <input name={`home_set${set}`} defaultValue={fixture[`home_set${set}`] ?? ""} style={inputStyle}/>
-                      <input name={`away_set${set}`} defaultValue={fixture[`away_set${set}`] ?? ""} style={inputStyle}/>
+                      <input
+                        type="number"
+                        name={`home_set${set}`}
+                        placeholder="H"
+                        defaultValue={fixture[`home_set${set}`] ?? ""}
+                        required
+                        style={inputStyle}
+                      />
+
+                      <input
+                        type="number"
+                        name={`away_set${set}`}
+                        placeholder="A"
+                        defaultValue={fixture[`away_set${set}`] ?? ""}
+                        required
+                        style={inputStyle}
+                      />
                     </div>
                   </div>
                 ))}
               </div>
 
-              <button style={buttonStyle}>Save Result</button>
+              <button type="submit" style={buttonStyle}>
+                Save Result
+              </button>
             </form>
           </div>
         ))}
@@ -228,17 +274,18 @@ const inputStyle = {
   width: "100%",
   padding: "8px",
   fontSize: "16px",
-  border: "1px solid #ccc",
+  border: "1px solid #999",
   borderRadius: "6px",
-  color: "#000"
+  color: "#000000",
+  background: "#ffffff",
 };
 
 const buttonStyle = {
   width: "100%",
   padding: "12px",
-  background: "#000",
-  color: "#fff",
+  background: "#000000",
+  color: "#ffffff",
   fontWeight: "bold",
   borderRadius: "8px",
-  border: "none"
+  border: "none",
 };
