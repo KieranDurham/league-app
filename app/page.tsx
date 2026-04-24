@@ -345,62 +345,75 @@ export default async function Home({
                 </div>
               )}
 
-              <form action={submitScore} style={{ marginTop: "10px" }}>
-                <input type="hidden" name="fixture_id" value={f.id} />
-                <input type="hidden" name="division_id" value={selectedDivisionId} />
+              {!f.played && (
+                <form action={submitScore} style={{ marginTop: "10px" }}>
+                  <input type="hidden" name="fixture_id" value={f.id} />
+                  <input type="hidden" name="division_id" value={selectedDivisionId} />
 
-                {[1, 2, 3].map((s) => (
-                  <div key={s} style={{ marginBottom: "8px" }}>
-                    <div
-                      style={{
-                        fontSize: "13px",
-                        fontWeight: "bold",
-                        color: "#222222",
-                        marginBottom: "4px",
-                      }}
-                    >
-                      Set {s}
+                  {[1, 2, 3].map((s) => (
+                    <div key={s} style={{ marginBottom: "8px" }}>
+                      <div
+                        style={{
+                          fontSize: "13px",
+                          fontWeight: "bold",
+                          color: "#222222",
+                          marginBottom: "4px",
+                        }}
+                      >
+                        Set {s}
+                      </div>
+
+                      <div style={{ display: "flex", gap: "8px" }}>
+                        <input
+                          name={`home_set${s}`}
+                          type="number"
+                          placeholder="Home"
+                          required
+                          style={inputStyle}
+                        />
+
+                        <input
+                          name={`away_set${s}`}
+                          type="number"
+                          placeholder="Away"
+                          required
+                          style={inputStyle}
+                        />
+                      </div>
                     </div>
+                  ))}
 
-                    <div style={{ display: "flex", gap: "8px" }}>
-                      <input
-                        name={`home_set${s}`}
-                        type="number"
-                        placeholder="Home"
-                        defaultValue={f[`home_set${s}`] ?? ""}
-                        required
-                        style={inputStyle}
-                      />
+                  <button
+                    type="submit"
+                    style={{
+                      width: "100%",
+                      background: primary,
+                      color: textColor,
+                      padding: "12px",
+                      borderRadius: "8px",
+                      border: "none",
+                      marginTop: "6px",
+                      fontWeight: "bold",
+                      fontSize: "16px",
+                    }}
+                  >
+                    Save Result
+                  </button>
+                </form>
+              )}
 
-                      <input
-                        name={`away_set${s}`}
-                        type="number"
-                        placeholder="Away"
-                        defaultValue={f[`away_set${s}`] ?? ""}
-                        required
-                        style={inputStyle}
-                      />
-                    </div>
-                  </div>
-                ))}
-
-                <button
-                  type="submit"
+              {f.played && (
+                <div
                   style={{
-                    width: "100%",
-                    background: primary,
-                    color: textColor,
-                    padding: "12px",
-                    borderRadius: "8px",
-                    border: "none",
-                    marginTop: "6px",
+                    textAlign: "center",
+                    color: primary,
                     fontWeight: "bold",
-                    fontSize: "16px",
+                    marginTop: "8px",
                   }}
                 >
-                  Save Result
-                </button>
-              </form>
+                  Result submitted
+                </div>
+              )}
             </div>
           ))}
         </div>
