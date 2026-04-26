@@ -45,6 +45,7 @@ async function submitScore(formData: FormData) {
     .eq("id", fixtureId);
 
   revalidatePath("/");
+  revalidatePath("/summary");
   redirect(`/?division=${divisionId}`);
 }
 
@@ -236,6 +237,25 @@ export default async function Home({
             {division.name}
           </a>
         ))}
+      </div>
+
+      <div style={{ marginBottom: "20px", textAlign: "center" }}>
+        <a
+          href="/summary"
+          style={{
+            display: "inline-block",
+            background: primary,
+            color: textColor,
+            padding: "12px 18px",
+            borderRadius: "999px",
+            textDecoration: "none",
+            fontWeight: "bold",
+            border: `2px solid ${primary}`,
+            fontSize: "15px",
+          }}
+        >
+          📊 View League Summary
+        </a>
       </div>
 
       <h2 style={{ color: "#000000", marginBottom: "10px" }}>League Table</h2>

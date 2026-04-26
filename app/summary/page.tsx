@@ -2,7 +2,14 @@ import { supabase } from "@/lib/supabase";
 
 export const dynamic = "force-dynamic";
 
-export default async function SummaryPage() {
+export default async function SummaryPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ round?: string }>;
+}) {
+  const params = await searchParams;
+  const selectedRound = Number(params?.round || 1);
+
   const { data: divisions } = await supabase
     .from("divisions")
     .select("*")
@@ -13,184 +20,247 @@ export default async function SummaryPage() {
   const { data: fixtures } = await supabase
     .from("fixtures")
     .select("*")
-    .eq("played", true)
-    .order("division_id", { ascending: true })
+    .eq("round", selectedRound)
+    .order("division_id", { ascending: true });
+
+  const { data: allFixtures } = await supabase
+    .from("fixtures")
+    .select("round")
     .order("round", { ascending: true });
 
+  const availableRounds = Array.from(
+    new Set((allFixtures || []).map((f: any) => f.round || 1))
+  ).sort((a: any, b: any) => a - b);
+
   const getTeamName = (id: number) => {
-    return teams?.find((team: any) => team.id === id)?.name || "Unknown";
+    return teams?.find((t: any) => t.id === id)?.name || "Unknown";
   };
 
   return (
     <main
       style={{
-        padding: "14px",
-        maxWidth: "1000px",
-        margin: "0 auto",
-        fontFamily: "Arial",
-        background: "#ffffff",
+        padding: "18px",
+        background: "#e9e9e9",
         minHeight: "100vh",
-        color: "#000000",
+        fontFamily: "Arial",
       }}
     >
-      <h1 style={{ textAlign: "center", marginBottom: "24px" }}>
-        League Results Summary
-      </h1>
+      {/* Top bar */}
+      <div
+        style={{
+          maxWidth: "1050px",
+          margin: "0 auto 14px auto",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          gap: "10px",
+        }}
+      >
+        <a
+          href="/"
+          style={{
+            background: "#111111",
+            color: "#ffffff",
+            padding: "10px 14px",
+            borderRadius: "999px",
+            textDecoration: "none",
+            fontWeight: "bold",
+          }}
+        >
+          ← Back
+        </a>
 
-      {divisions?.map((division: any) => {
-        const divisionFixtures =
-          fixtures?.filter((fixture: any) => fixture.division_id === division.id) || [];
-
-        const groupedFixtures = divisionFixtures.reduce((acc: any, fixture: any) => {
-          const round = fixture.round || 1;
-          if (!acc[round]) acc[round] = [];
-          acc[round].push(fixture);
-          return acc;
-        }, {});
-
-        const primary = division.primary_color || "#000000";
-        const secondary = division.secondary_color || "#ffffff";
-        const textColor = division.text_color || "#ffffff";
-
-        return (
-          <section
-            key={division.id}
-            style={{
-              marginBottom: "34px",
-              padding: "14px",
-              borderRadius: "14px",
-              background: secondary,
-              border: `2px solid ${primary}`,
-            }}
-          >
-            {division.logo_url && (
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "center",
-                  marginBottom: "14px",
-                }}
-              >
-                <img
-                  src={division.logo_url}
-                  alt={`${division.name} sponsor logo`}
-                  style={{
-                    maxWidth: "160px",
-                    width: "100%",
-                    height: "auto",
-                  }}
-                />
-              </div>
-            )}
-
-            <h2
+        <div style={{ display: "flex", gap: "8px", overflowX: "auto" }}>
+          {availableRounds.map((round: any) => (
+            <a
+              key={round}
+              href={`/summary?round=${round}`}
               style={{
-                background: primary,
-                color: textColor,
-                padding: "12px",
-                borderRadius: "10px",
-                textAlign: "center",
-                marginBottom: "16px",
+                padding: "8px 12px",
+                borderRadius: "999px",
+                background:
+                  Number(round) === selectedRound ? "#111111" : "#ffffff",
+                color:
+                  Number(round) === selectedRound ? "#ffffff" : "#000000",
+                textDecoration: "none",
+                fontWeight: "bold",
+                border: "1px solid #ccc",
               }}
             >
-              {division.name}
-            </h2>
+              R{round}
+            </a>
+          ))}
+        </div>
+      </div>
 
-            {divisionFixtures.length === 0 && (
-              <p style={{ textAlign: "center", fontWeight: "bold" }}>
-                No results submitted yet.
-              </p>
-            )}
+      {/* Main card */}
+      <section
+        style={{
+          maxWidth: "1050px",
+          margin: "0 auto",
+          background: "#ffffff",
+          borderRadius: "26px",
+          padding: "22px",
+          border: "4px solid #000",
+        }}
+      >
+        {/* Header */}
+        <div
+          style={{
+            background: "#000",
+            color: "#fff",
+            borderRadius: "18px",
+            padding: "20px",
+            textAlign: "center",
+            marginBottom: "20px",
+          }}
+        >
+          <h1 style={{ margin: 0, fontSize: "34px" }}>
+            WEEK {selectedRound} RESULTS
+          </h1>
+          <p style={{ margin: 0, opacity: 0.8 }}>
+            League Fixtures Summary
+          </p>
+        </div>
 
-            {Object.entries(groupedFixtures).map(([round, roundFixtures]: any) => (
-              <div key={round} style={{ marginBottom: "18px" }}>
-                <h3
+        {/* GRID */}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(3, 1fr)",
+            gap: "18px",
+          }}
+        >
+          {divisions?.map((division: any) => {
+            const divisionFixtures = (fixtures || []).filter(
+              (f: any) => f.division_id === division.id
+            );
+
+            return (
+              <div
+                key={division.id}
+                style={{
+                  borderRadius: "18px",
+                  overflow: "hidden",
+                  border: `3px solid ${
+                    division.primary_color || "#000"
+                  }`,
+                  background: "#fff",
+                }}
+              >
+                {/* HEADER */}
+                <div
                   style={{
-                    background: primary,
-                    color: textColor,
-                    padding: "8px 12px",
-                    borderRadius: "8px",
+                    background: division.primary_color || "#000",
+                    color: division.text_color || "#fff",
+                    padding: "16px",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    gap: "8px",
                   }}
                 >
-                  Round {round}
-                </h3>
+                  {division.logo_url && (
+                    <img
+                      src={division.logo_url}
+                      alt="logo"
+                      style={{
+                        width: "70px",
+                        height: "70px",
+                        borderRadius: "50%",
+                        objectFit: "contain",
+                        background: "#ffffff",
+                        padding: "6px",
+                        boxShadow: "0 3px 10px rgba(0,0,0,0.3)",
+                      }}
+                    />
+                  )}
 
-                <div style={{ display: "grid", gap: "10px" }}>
-                  {roundFixtures.map((fixture: any) => {
-                    const homeWon = fixture.home_score > fixture.away_score;
-                    const awayWon = fixture.away_score > fixture.home_score;
+                  <h2
+                    style={{
+                      margin: 0,
+                      fontSize: "22px",
+                      fontWeight: "bold",
+                      textTransform: "uppercase",
+                    }}
+                  >
+                    {division.name}
+                  </h2>
+                </div>
 
-                    return (
+                {/* FIXTURES */}
+                <div style={{ padding: "12px" }}>
+                  {divisionFixtures.length === 0 && (
+                    <p
+                      style={{
+                        textAlign: "center",
+                        fontWeight: "bold",
+                        color: "#666",
+                        padding: "20px 0",
+                      }}
+                    >
+                      No fixtures for this round
+                    </p>
+                  )}
+
+                  {divisionFixtures.map((fixture: any) => (
+                    <div
+                      key={fixture.id}
+                      style={{
+                        borderBottom: "1px solid #ddd",
+                        padding: "10px 0",
+                      }}
+                    >
                       <div
-                        key={fixture.id}
                         style={{
-                          background: "#ffffff",
-                          border: `1px solid ${primary}`,
-                          borderRadius: "10px",
-                          padding: "12px",
+                          display: "grid",
+                          gridTemplateColumns: "1fr auto 1fr",
+                          alignItems: "center",
+                          gap: "8px",
+                          fontWeight: "bold",
                         }}
                       >
+                        <div>{getTeamName(fixture.home_team_id)}</div>
+
                         <div
                           style={{
-                            display: "grid",
-                            gridTemplateColumns: "1fr auto 1fr",
-                            gap: "8px",
-                            alignItems: "center",
+                            background: "#eee",
+                            padding: "6px 10px",
+                            borderRadius: "999px",
                           }}
                         >
-                          <div
-                            style={{
-                              fontWeight: homeWon ? "900" : "700",
-                              color: homeWon ? "#0a7a2f" : "#111111",
-                            }}
-                          >
-                            {getTeamName(fixture.home_team_id)}
-                          </div>
-
-                          <div
-                            style={{
-                              fontWeight: "900",
-                              fontSize: "18px",
-                              textAlign: "center",
-                              color: "#000000",
-                            }}
-                          >
-                            {fixture.home_score} - {fixture.away_score}
-                          </div>
-
-                          <div
-                            style={{
-                              fontWeight: awayWon ? "900" : "700",
-                              color: awayWon ? "#0a7a2f" : "#111111",
-                              textAlign: "right",
-                            }}
-                          >
-                            {getTeamName(fixture.away_team_id)}
-                          </div>
+                          {fixture.played
+                            ? `${fixture.home_score} - ${fixture.away_score}`
+                            : "vs"}
                         </div>
 
+                        <div style={{ textAlign: "right" }}>
+                          {getTeamName(fixture.away_team_id)}
+                        </div>
+                      </div>
+
+                      {fixture.played && (
                         <div
                           style={{
                             textAlign: "center",
-                            marginTop: "6px",
-                            fontSize: "13px",
-                            color: "#333333",
-                            fontWeight: "600",
+                            fontSize: "12px",
+                            marginTop: "5px",
+                            color: "#555",
                           }}
                         >
-                          {fixture.home_set1}-{fixture.away_set1} |{" "}
+                          Sets: {fixture.home_set1}-{fixture.away_set1} |{" "}
                           {fixture.home_set2}-{fixture.away_set2} |{" "}
                           {fixture.home_set3}-{fixture.away_set3}
                         </div>
-                      </div>
-                    );
-                  })}
+                      )}
+                    </div>
+                  ))}
                 </div>
               </div>
-            ))}
-          </section>
-        );
-      })}
+            );
+          })}
+        </div>
+      </section>
     </main>
   );
 }
