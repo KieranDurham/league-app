@@ -5,10 +5,12 @@ export const dynamic = "force-dynamic";
 export default async function SummaryPage({
   searchParams,
 }: {
-  searchParams?: Promise<{ round?: string }>;
+  searchParams?: Promise<{ round?: string; view?: string; group?: string }>;
 }) {
   const params = await searchParams;
   const selectedRound = Number(params?.round || 1);
+  const isScreenshot = params?.view === "screenshot";
+  const group = Number(params?.group || 1);
 
   const { data: divisions } = await supabase
     .from("divisions")
@@ -32,12 +34,16 @@ export default async function SummaryPage({
     new Set((allFixtures || []).map((f: any) => f.round || 1))
   ).sort((a: any, b: any) => a - b);
 
+  const visibleDivisions = isScreenshot
+    ? (divisions || []).slice(group === 1 ? 0 : 3, group === 1 ? 3 : 6)
+    : divisions || [];
+
   const getTeamName = (id: number) => {
     return teams?.find((t: any) => t.id === id)?.name || "Unknown";
   };
 
   return (
-    <main className="summary-page">
+    <main className={isScreenshot ? "summary-page screenshot" : "summary-page"}>
       <style>{`
         .summary-page {
           padding: 18px;
@@ -171,6 +177,88 @@ export default async function SummaryPage({
             color: #222;
           }
         }
+
+        .screenshot {
+          padding: 6px;
+          background: #ffffff;
+        }
+
+        .screenshot .top-bar {
+          display: none;
+        }
+
+        .screenshot .main-card {
+          max-width: 430px;
+          padding: 10px;
+          border-radius: 20px;
+          border: 4px solid #000;
+        }
+
+        .screenshot .summary-title {
+          padding: 12px;
+          margin-bottom: 10px;
+          border-radius: 14px;
+        }
+
+        .screenshot .summary-title h1 {
+          font-size: 24px !important;
+        }
+
+        .screenshot .summary-title p {
+          font-size: 13px;
+        }
+
+        .screenshot .summary-grid {
+          grid-template-columns: 1fr;
+          gap: 10px;
+        }
+
+        .screenshot .division-card {
+          border-radius: 16px;
+        }
+
+        .screenshot .division-header {
+          padding: 10px;
+          gap: 4px;
+        }
+
+        .screenshot .division-logo {
+          width: 46px;
+          height: 46px;
+        }
+
+        .screenshot .division-header h2 {
+          font-size: 22px !important;
+        }
+
+        .screenshot .fixture-body {
+          padding: 8px !important;
+        }
+
+        .screenshot .fixture-item {
+          padding: 7px 0 !important;
+        }
+
+        .screenshot .team-name {
+          font-size: 14px;
+          line-height: 1.15;
+        }
+
+        .screenshot .score-pill {
+          font-size: 14px;
+          padding: 5px 8px;
+          min-width: 40px;
+        }
+
+        .screenshot .sets {
+          font-size: 11px;
+          margin-top: 3px;
+        }
+
+        .screenshot .empty-message {
+          padding: 14px 0 !important;
+          font-size: 14px;
+        }
       `}</style>
 
       <div className="top-bar">
@@ -211,10 +299,43 @@ export default async function SummaryPage({
             </a>
           ))}
         </div>
+
+        <div style={{ display: "flex", gap: "8px", overflowX: "auto" }}>
+          <a
+            href={`/summary?round=${selectedRound}&view=screenshot&group=1`}
+            style={{
+              padding: "8px 12px",
+              borderRadius: "999px",
+              background: "#111111",
+              color: "#ffffff",
+              textDecoration: "none",
+              fontWeight: "bold",
+              whiteSpace: "nowrap",
+            }}
+          >
+            Screenshot 1-3
+          </a>
+
+          <a
+            href={`/summary?round=${selectedRound}&view=screenshot&group=2`}
+            style={{
+              padding: "8px 12px",
+              borderRadius: "999px",
+              background: "#111111",
+              color: "#ffffff",
+              textDecoration: "none",
+              fontWeight: "bold",
+              whiteSpace: "nowrap",
+            }}
+          >
+            Screenshot 4-6
+          </a>
+        </div>
       </div>
 
       <section className="main-card">
         <div
+          className="summary-title"
           style={{
             background: "#000",
             color: "#fff",
@@ -231,7 +352,7 @@ export default async function SummaryPage({
         </div>
 
         <div className="summary-grid">
-          {divisions?.map((division: any) => {
+          {visibleDivisions.map((division: any) => {
             const divisionFixtures = (fixtures || []).filter(
               (f: any) => f.division_id === division.id
             );
@@ -271,9 +392,10 @@ export default async function SummaryPage({
                   </h2>
                 </div>
 
-                <div style={{ padding: "12px" }}>
+                <div className="fixture-body" style={{ padding: "12px" }}>
                   {divisionFixtures.length === 0 && (
                     <p
+                      className="empty-message"
                       style={{
                         textAlign: "center",
                         fontWeight: "bold",
@@ -288,6 +410,7 @@ export default async function SummaryPage({
                   {divisionFixtures.map((fixture: any) => (
                     <div
                       key={fixture.id}
+                      className="fixture-item"
                       style={{
                         borderBottom: "1px solid #ddd",
                         padding: "10px 0",
