@@ -5,12 +5,11 @@ export const dynamic = "force-dynamic";
 export default async function SummaryPage({
   searchParams,
 }: {
-  searchParams?: Promise<{ round?: string; view?: string; group?: string }>;
+  searchParams?: Promise<{ round?: string; view?: string }>;
 }) {
   const params = await searchParams;
   const selectedRound = Number(params?.round || 1);
   const isScreenshot = params?.view === "screenshot";
-  const group = Number(params?.group || 1);
 
   const { data: divisions } = await supabase
     .from("divisions")
@@ -34,10 +33,6 @@ export default async function SummaryPage({
     new Set((allFixtures || []).map((f: any) => f.round || 1))
   ).sort((a: any, b: any) => a - b);
 
-  const visibleDivisions = isScreenshot
-    ? (divisions || []).slice(group === 1 ? 0 : 3, group === 1 ? 3 : 6)
-    : divisions || [];
-
   const getTeamName = (id: number) => {
     return teams?.find((t: any) => t.id === id)?.name || "Unknown";
   };
@@ -46,7 +41,7 @@ export default async function SummaryPage({
     <main className={isScreenshot ? "summary-page screenshot" : "summary-page"}>
       <style>{`
         .summary-page {
-          padding: 18px;
+          padding: 14px;
           background: #e9e9e9;
           min-height: 100vh;
           font-family: Arial, sans-serif;
@@ -54,8 +49,8 @@ export default async function SummaryPage({
         }
 
         .top-bar {
-          max-width: 1050px;
-          margin: 0 auto 14px auto;
+          max-width: 1080px;
+          margin: 0 auto 12px auto;
           display: flex;
           justify-content: space-between;
           align-items: center;
@@ -63,18 +58,38 @@ export default async function SummaryPage({
         }
 
         .main-card {
-          max-width: 1050px;
+          max-width: 1080px;
           margin: 0 auto;
           background: #ffffff;
-          border-radius: 26px;
-          padding: 22px;
+          border-radius: 22px;
+          padding: 14px;
           border: 4px solid #000;
+        }
+
+        .summary-title {
+          background: #000;
+          color: #fff;
+          border-radius: 16px;
+          padding: 14px;
+          text-align: center;
+          margin-bottom: 14px;
+        }
+
+        .summary-title h1 {
+          margin: 0;
+          font-size: 30px;
+        }
+
+        .summary-title p {
+          margin: 0;
+          opacity: 0.8;
+          font-size: 13px;
         }
 
         .summary-grid {
           display: grid;
           grid-template-columns: repeat(3, 1fr);
-          gap: 18px;
+          gap: 16px;
         }
 
         .division-card {
@@ -84,49 +99,83 @@ export default async function SummaryPage({
         }
 
         .division-header {
-          padding: 16px;
+          height: 132px;
+          padding: 10px;
           display: flex;
           flex-direction: column;
           align-items: center;
+          justify-content: center;
           gap: 8px;
         }
 
         .division-logo {
-          width: 70px;
-          height: 70px;
+          width: 58px;
+          height: 58px;
           object-fit: contain;
+        }
+
+        .division-header h2 {
+          margin: 0;
+          font-size: 22px;
+          font-weight: 900;
+          text-transform: uppercase;
+          text-align: center;
+        }
+
+        .fixture-body {
+          padding: 10px 12px;
+        }
+
+        .fixture-item {
+          border-bottom: 1px solid #ddd;
+          padding: 8px 0;
         }
 
         .fixture-row {
           display: grid;
-          grid-template-columns: 1fr auto 1fr;
+          grid-template-columns: minmax(0, 1fr) 54px minmax(0, 1fr);
           align-items: center;
           gap: 8px;
-          font-weight: bold;
+          font-weight: 900;
           color: #000;
         }
 
         .team-name {
           color: #000;
-          font-size: 15px;
-          line-height: 1.25;
+          font-size: 14px;
+          line-height: 1.15;
+          word-break: normal;
+          overflow-wrap: normal;
+        }
+
+        .team-name.right {
+          text-align: right;
         }
 
         .score-pill {
           background: #eeeeee;
-          padding: 6px 10px;
+          padding: 7px 8px;
           border-radius: 999px;
           color: #000;
-          font-weight: bold;
-          min-width: 46px;
+          font-weight: 900;
           text-align: center;
+          font-size: 15px;
+          white-space: nowrap;
         }
 
         .sets {
           text-align: center;
-          font-size: 12px;
+          font-size: 11px;
           margin-top: 5px;
           color: #333;
+          white-space: nowrap;
+        }
+
+        .empty-message {
+          text-align: center;
+          font-weight: bold;
+          color: #333;
+          padding: 16px 0;
         }
 
         @media (max-width: 900px) {
@@ -146,7 +195,7 @@ export default async function SummaryPage({
           }
 
           .main-card {
-            padding: 12px;
+            padding: 10px;
             border-radius: 20px;
           }
 
@@ -155,31 +204,26 @@ export default async function SummaryPage({
             gap: 14px;
           }
 
+          .division-header {
+            height: 140px;
+          }
+
           .division-logo {
-            width: 82px;
-            height: 82px;
+            width: 70px;
+            height: 70px;
           }
 
           .division-header h2 {
-            font-size: 26px !important;
+            font-size: 26px;
           }
 
           .team-name {
-            font-size: 16px;
-          }
-
-          .score-pill {
-            font-size: 16px;
-          }
-
-          .sets {
-            font-size: 13px;
-            color: #222;
+            font-size: 15px;
           }
         }
 
         .screenshot {
-          padding: 6px;
+          padding: 0;
           background: #ffffff;
         }
 
@@ -188,29 +232,19 @@ export default async function SummaryPage({
         }
 
         .screenshot .main-card {
-          max-width: 430px;
-          padding: 10px;
-          border-radius: 20px;
-          border: 4px solid #000;
+          max-width: 1040px;
+          padding: 8px;
+          border-radius: 0;
+          border: 3px solid #000;
         }
 
         .screenshot .summary-title {
-          padding: 12px;
-          margin-bottom: 10px;
-          border-radius: 14px;
-        }
-
-        .screenshot .summary-title h1 {
-          font-size: 24px !important;
-        }
-
-        .screenshot .summary-title p {
-          font-size: 13px;
+          display: none;
         }
 
         .screenshot .summary-grid {
-          grid-template-columns: 1fr;
-          gap: 10px;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 16px;
         }
 
         .screenshot .division-card {
@@ -218,25 +252,30 @@ export default async function SummaryPage({
         }
 
         .screenshot .division-header {
-          padding: 10px;
-          gap: 4px;
+          height: 132px;
+          padding: 8px;
         }
 
         .screenshot .division-logo {
-          width: 46px;
-          height: 46px;
+          width: 54px;
+          height: 54px;
         }
 
         .screenshot .division-header h2 {
-          font-size: 22px !important;
+          font-size: 22px;
         }
 
         .screenshot .fixture-body {
-          padding: 8px !important;
+          padding: 8px 12px;
         }
 
         .screenshot .fixture-item {
-          padding: 7px 0 !important;
+          padding: 7px 0;
+        }
+
+        .screenshot .fixture-row {
+          grid-template-columns: minmax(0, 1fr) 52px minmax(0, 1fr);
+          gap: 7px;
         }
 
         .screenshot .team-name {
@@ -245,19 +284,13 @@ export default async function SummaryPage({
         }
 
         .screenshot .score-pill {
-          font-size: 14px;
-          padding: 5px 8px;
-          min-width: 40px;
+          font-size: 15px;
+          padding: 7px 7px;
         }
 
         .screenshot .sets {
           font-size: 11px;
-          margin-top: 3px;
-        }
-
-        .screenshot .empty-message {
-          padding: 14px 0 !important;
-          font-size: 14px;
+          margin-top: 4px;
         }
       `}</style>
 
@@ -287,8 +320,7 @@ export default async function SummaryPage({
                 borderRadius: "999px",
                 background:
                   Number(round) === selectedRound ? "#111111" : "#ffffff",
-                color:
-                  Number(round) === selectedRound ? "#ffffff" : "#000000",
+                color: Number(round) === selectedRound ? "#ffffff" : "#000000",
                 textDecoration: "none",
                 fontWeight: "bold",
                 border: "1px solid #ccc",
@@ -300,59 +332,30 @@ export default async function SummaryPage({
           ))}
         </div>
 
-        <div style={{ display: "flex", gap: "8px", overflowX: "auto" }}>
-          <a
-            href={`/summary?round=${selectedRound}&view=screenshot&group=1`}
-            style={{
-              padding: "8px 12px",
-              borderRadius: "999px",
-              background: "#111111",
-              color: "#ffffff",
-              textDecoration: "none",
-              fontWeight: "bold",
-              whiteSpace: "nowrap",
-            }}
-          >
-            Screenshot 1-3
-          </a>
-
-          <a
-            href={`/summary?round=${selectedRound}&view=screenshot&group=2`}
-            style={{
-              padding: "8px 12px",
-              borderRadius: "999px",
-              background: "#111111",
-              color: "#ffffff",
-              textDecoration: "none",
-              fontWeight: "bold",
-              whiteSpace: "nowrap",
-            }}
-          >
-            Screenshot 4-6
-          </a>
-        </div>
+        <a
+          href={`/summary?round=${selectedRound}&view=screenshot`}
+          style={{
+            padding: "8px 12px",
+            borderRadius: "999px",
+            background: "#111111",
+            color: "#ffffff",
+            textDecoration: "none",
+            fontWeight: "bold",
+            whiteSpace: "nowrap",
+          }}
+        >
+          Screenshot
+        </a>
       </div>
 
       <section className="main-card">
-        <div
-          className="summary-title"
-          style={{
-            background: "#000",
-            color: "#fff",
-            borderRadius: "18px",
-            padding: "20px",
-            textAlign: "center",
-            marginBottom: "20px",
-          }}
-        >
-          <h1 style={{ margin: 0, fontSize: "34px" }}>
-            WEEK {selectedRound} RESULTS
-          </h1>
-          <p style={{ margin: 0, opacity: 0.8 }}>League Fixtures Summary</p>
+        <div className="summary-title">
+          <h1>WEEK {selectedRound} RESULTS</h1>
+          <p>League Fixtures Summary</p>
         </div>
 
         <div className="summary-grid">
-          {visibleDivisions.map((division: any) => {
+          {(divisions || []).map((division: any) => {
             const divisionFixtures = (fixtures || []).filter(
               (f: any) => f.division_id === division.id
             );
@@ -380,42 +383,16 @@ export default async function SummaryPage({
                     />
                   )}
 
-                  <h2
-                    style={{
-                      margin: 0,
-                      fontSize: "22px",
-                      fontWeight: "bold",
-                      textTransform: "uppercase",
-                    }}
-                  >
-                    {division.name}
-                  </h2>
+                  <h2>{division.name}</h2>
                 </div>
 
-                <div className="fixture-body" style={{ padding: "12px" }}>
+                <div className="fixture-body">
                   {divisionFixtures.length === 0 && (
-                    <p
-                      className="empty-message"
-                      style={{
-                        textAlign: "center",
-                        fontWeight: "bold",
-                        color: "#333",
-                        padding: "20px 0",
-                      }}
-                    >
-                      No fixtures for this round
-                    </p>
+                    <p className="empty-message">No fixtures for this round</p>
                   )}
 
                   {divisionFixtures.map((fixture: any) => (
-                    <div
-                      key={fixture.id}
-                      className="fixture-item"
-                      style={{
-                        borderBottom: "1px solid #ddd",
-                        padding: "10px 0",
-                      }}
-                    >
+                    <div key={fixture.id} className="fixture-item">
                       <div className="fixture-row">
                         <div className="team-name">
                           {getTeamName(fixture.home_team_id)}
@@ -427,7 +404,7 @@ export default async function SummaryPage({
                             : "vs"}
                         </div>
 
-                        <div className="team-name" style={{ textAlign: "right" }}>
+                        <div className="team-name right">
                           {getTeamName(fixture.away_team_id)}
                         </div>
                       </div>
