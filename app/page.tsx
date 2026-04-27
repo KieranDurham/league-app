@@ -46,6 +46,8 @@ async function submitScore(formData: FormData) {
 
   revalidatePath("/");
   revalidatePath("/summary");
+  revalidatePath(`/team/${fixtureId}`);
+
   redirect(`/?division=${divisionId}`);
 }
 
@@ -153,6 +155,12 @@ export default async function Home({
 
   const getTeamName = (id: number) => {
     return teams?.find((team: any) => team.id === id)?.name || "Unknown";
+  };
+
+  const teamLinkStyle = {
+    color: "inherit",
+    textDecoration: "none",
+    fontWeight: "bold",
   };
 
   const inputStyle = {
@@ -307,7 +315,9 @@ export default async function Home({
                     color: "#000000",
                   }}
                 >
-                  {team.name}
+                  <a href={`/team/${team.id}`} style={teamLinkStyle}>
+                    {team.name}
+                  </a>
                 </td>
 
                 <td style={{ textAlign: "center", color: "#000000" }}>
@@ -397,7 +407,9 @@ export default async function Home({
                 }}
               >
                 <strong style={{ color: "#111111", fontSize: "15px" }}>
-                  {getTeamName(fixture.home_team_id)}
+                  <a href={`/team/${fixture.home_team_id}`} style={teamLinkStyle}>
+                    {getTeamName(fixture.home_team_id)}
+                  </a>
                 </strong>
 
                 <div
@@ -421,7 +433,9 @@ export default async function Home({
                     textAlign: "right",
                   }}
                 >
-                  {getTeamName(fixture.away_team_id)}
+                  <a href={`/team/${fixture.away_team_id}`} style={teamLinkStyle}>
+                    {getTeamName(fixture.away_team_id)}
+                  </a>
                 </strong>
               </div>
 
