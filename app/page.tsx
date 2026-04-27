@@ -88,6 +88,7 @@ export default async function Home({
       name: team.name,
       played: 0,
       won: 0,
+      drawn: 0,
       lost: 0,
       points: 0,
       goal_difference: 0,
@@ -126,6 +127,11 @@ export default async function Home({
       away.won += 1;
       home.lost += 1;
       away.points += 3;
+    } else {
+      home.drawn += 1;
+      away.drawn += 1;
+      home.points += 1;
+      away.points += 1;
     }
   });
 
@@ -281,6 +287,7 @@ export default async function Home({
               <th style={{ padding: "10px", textAlign: "left" }}>Team</th>
               <th style={{ padding: "10px" }}>P</th>
               <th style={{ padding: "10px" }}>W</th>
+              <th style={{ padding: "10px" }}>D</th>
               <th style={{ padding: "10px" }}>L</th>
               <th style={{ padding: "10px" }}>GD</th>
               <th style={{ padding: "10px" }}>Pts</th>
@@ -302,15 +309,23 @@ export default async function Home({
                 >
                   {team.name}
                 </td>
+
                 <td style={{ textAlign: "center", color: "#000000" }}>
                   {team.played}
                 </td>
+
                 <td style={{ textAlign: "center", color: "#000000" }}>
                   {team.won}
                 </td>
+
+                <td style={{ textAlign: "center", color: "#000000" }}>
+                  {team.drawn}
+                </td>
+
                 <td style={{ textAlign: "center", color: "#000000" }}>
                   {team.lost}
                 </td>
+
                 <td
                   style={{
                     textAlign: "center",
@@ -322,6 +337,7 @@ export default async function Home({
                     ? `+${team.goal_difference}`
                     : team.goal_difference}
                 </td>
+
                 <td
                   style={{
                     textAlign: "center",
