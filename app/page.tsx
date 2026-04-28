@@ -4,6 +4,31 @@ import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
+function getCountedGames(fixture: any) {
+  let homeGames = 0;
+  let awayGames = 0;
+  let homeSetsWon = 0;
+  let awaySetsWon = 0;
+
+  const sets = [
+    [fixture.home_set1 || 0, fixture.away_set1 || 0],
+    [fixture.home_set2 || 0, fixture.away_set2 || 0],
+    [fixture.home_set3 || 0, fixture.away_set3 || 0],
+  ];
+
+  for (const [homeSet, awaySet] of sets) {
+    if (homeSetsWon === 2 || awaySetsWon === 2) break;
+
+    homeGames += homeSet;
+    awayGames += awaySet;
+
+    if (homeSet > awaySet) homeSetsWon += 1;
+    else if (awaySet > homeSet) awaySetsWon += 1;
+  }
+
+  return { homeGames, awayGames };
+}
+
 async function submitScore(formData: FormData) {
   "use server";
 
@@ -46,8 +71,6 @@ async function submitScore(formData: FormData) {
 
   revalidatePath("/");
   revalidatePath("/summary");
-  revalidatePath(`/team/${fixtureId}`);
-
   redirect(`/?division=${divisionId}`);
 }
 
@@ -108,15 +131,7 @@ export default async function Home({
     home.played += 1;
     away.played += 1;
 
-    const homeGames =
-      (fixture.home_set1 || 0) +
-      (fixture.home_set2 || 0) +
-      (fixture.home_set3 || 0);
-
-    const awayGames =
-      (fixture.away_set1 || 0) +
-      (fixture.away_set2 || 0) +
-      (fixture.away_set3 || 0);
+    const { homeGames, awayGames } = getCountedGames(fixture);
 
     home.goal_difference += homeGames - awayGames;
     away.goal_difference += awayGames - homeGames;
