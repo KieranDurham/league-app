@@ -14,8 +14,15 @@ async function submitScore(formData: FormData) {
   const a1 = Number(formData.get("away_set1"));
   const h2 = Number(formData.get("home_set2"));
   const a2 = Number(formData.get("away_set2"));
-  const h3 = Number(formData.get("home_set3"));
-  const a3 = Number(formData.get("away_set3"));
+
+  const rawH3 = formData.get("home_set3");
+  const rawA3 = formData.get("away_set3");
+
+  const h3 =
+    rawH3 === null || rawH3 === "" ? null : Number(rawH3);
+
+  const a3 =
+    rawA3 === null || rawA3 === "" ? null : Number(rawA3);
 
   let homeSets = 0;
   let awaySets = 0;
@@ -26,8 +33,12 @@ async function submitScore(formData: FormData) {
   if (h2 > a2) homeSets++;
   else if (a2 > h2) awaySets++;
 
-  if (h3 > a3) homeSets++;
-  else if (a3 > h3) awaySets++;
+  const needsThirdSet = homeSets === 1 && awaySets === 1;
+
+  if (needsThirdSet && h3 !== null && a3 !== null) {
+    if (h3 > a3) homeSets++;
+    else if (a3 > h3) awaySets++;
+  }
 
   await supabase
     .from("fixtures")
@@ -36,8 +47,8 @@ async function submitScore(formData: FormData) {
       away_set1: a1,
       home_set2: h2,
       away_set2: a2,
-      home_set3: h3,
-      away_set3: a3,
+      home_set3: needsThirdSet ? h3 : null,
+      away_set3: needsThirdSet ? a3 : null,
       home_score: homeSets,
       away_score: awaySets,
       played: true,
@@ -108,15 +119,29 @@ export default async function Home({
     home.played += 1;
     away.played += 1;
 
-    const homeGames =
+    let homeGames =
       (fixture.home_set1 || 0) +
-      (fixture.home_set2 || 0) +
-      (fixture.home_set3 || 0);
+      (fixture.home_set2 || 0);
 
-    const awayGames =
+    let awayGames =
       (fixture.away_set1 || 0) +
-      (fixture.away_set2 || 0) +
-      (fixture.away_set3 || 0);
+      (fixture.away_set2 || 0);
+
+    const homeFirstTwoSets =
+      (fixture.home_set1 > fixture.away_set1 ? 1 : 0) +
+      (fixture.home_set2 > fixture.away_set2 ? 1 : 0);
+
+    const awayFirstTwoSets =
+      (fixture.away_set1 > fixture.home_set1 ? 1 : 0) +
+      (fixture.away_set2 > fixture.home_set2 ? 1 : 0);
+
+    const thirdSetWasNeeded =
+      homeFirstTwoSets === 1 && awayFirstTwoSets === 1;
+
+    if (thirdSetWasNeeded) {
+      homeGames += fixture.home_set3 || 0;
+      awayGames += fixture.away_set3 || 0;
+    }
 
     home.goal_difference += homeGames - awayGames;
     away.goal_difference += awayGames - homeGames;
@@ -385,87 +410,136 @@ export default async function Home({
             Round {round}
           </h3>
 
-          {roundFixtures.map((fixture: any) => (
-            <div
-              key={fixture.id}
-              style={{
-                border: `2px solid ${primary}`,
-                padding: "12px",
-                borderRadius: "10px",
-                marginBottom: "12px",
-                background: "#ffffff",
-                color: "#000000",
-              }}
-            >
+          {roundFixtures.map((fixture: any) => {
+            const showThirdSet =
+              fixture.played &&
+              fixture.home_set3 !== null &&
+              fixture.away_set3 !== null;
+
+            return (
               <div
+                key={fixture.id}
                 style={{
-                  display: "grid",
-                  gridTemplateColumns: "1fr auto 1fr",
-                  gap: "8px",
-                  alignItems: "center",
-                  marginBottom: "10px",
+                  border: `2px solid ${primary}`,
+                  padding: "12px",
+                  borderRadius: "10px",
+                  marginBottom: "12px",
+                  background: "#ffffff",
+                  color: "#000000",
                 }}
               >
-                <strong style={{ color: "#111111", fontSize: "15px" }}>
-                  <a href={`/team/${fixture.home_team_id}`} style={teamLinkStyle}>
-                    {getTeamName(fixture.home_team_id)}
-                  </a>
-                </strong>
-
                 <div
                   style={{
-                    color: "#000000",
-                    fontWeight: "bold",
-                    textAlign: "center",
-                    minWidth: "55px",
-                    fontSize: "17px",
-                  }}
-                >
-                  {fixture.played
-                    ? `${fixture.home_score} - ${fixture.away_score}`
-                    : "vs"}
-                </div>
-
-                <strong
-                  style={{
-                    color: "#111111",
-                    fontSize: "15px",
-                    textAlign: "right",
-                  }}
-                >
-                  <a href={`/team/${fixture.away_team_id}`} style={teamLinkStyle}>
-                    {getTeamName(fixture.away_team_id)}
-                  </a>
-                </strong>
-              </div>
-
-              {fixture.played && (
-                <div
-                  style={{
-                    textAlign: "center",
-                    fontSize: "13px",
-                    color: "#333333",
+                    display: "grid",
+                    gridTemplateColumns: "1fr auto 1fr",
+                    gap: "8px",
+                    alignItems: "center",
                     marginBottom: "10px",
-                    fontWeight: "500",
                   }}
                 >
-                  {fixture.home_set1}-{fixture.away_set1} |{" "}
-                  {fixture.home_set2}-{fixture.away_set2} |{" "}
-                  {fixture.home_set3}-{fixture.away_set3}
+                  <strong style={{ color: "#111111", fontSize: "15px" }}>
+                    <a
+                      href={`/team/${fixture.home_team_id}`}
+                      style={teamLinkStyle}
+                    >
+                      {getTeamName(fixture.home_team_id)}
+                    </a>
+                  </strong>
+
+                  <div
+                    style={{
+                      color: "#000000",
+                      fontWeight: "bold",
+                      textAlign: "center",
+                      minWidth: "55px",
+                      fontSize: "17px",
+                    }}
+                  >
+                    {fixture.played
+                      ? `${fixture.home_score} - ${fixture.away_score}`
+                      : "vs"}
+                  </div>
+
+                  <strong
+                    style={{
+                      color: "#111111",
+                      fontSize: "15px",
+                      textAlign: "right",
+                    }}
+                  >
+                    <a
+                      href={`/team/${fixture.away_team_id}`}
+                      style={teamLinkStyle}
+                    >
+                      {getTeamName(fixture.away_team_id)}
+                    </a>
+                  </strong>
                 </div>
-              )}
 
-              {!fixture.played && (
-                <form action={submitScore} style={{ marginTop: "10px" }}>
-                  <input type="hidden" name="fixture_id" value={fixture.id} />
-                  <input
-                    type="hidden"
-                    name="division_id"
-                    value={selectedDivisionId}
-                  />
+                {fixture.played && (
+                  <div
+                    style={{
+                      textAlign: "center",
+                      fontSize: "13px",
+                      color: "#333333",
+                      marginBottom: "10px",
+                      fontWeight: "500",
+                    }}
+                  >
+                    {fixture.home_set1}-{fixture.away_set1} |{" "}
+                    {fixture.home_set2}-{fixture.away_set2}
+                    {showThirdSet && (
+                      <>
+                        {" "}
+                        | {fixture.home_set3}-{fixture.away_set3}
+                      </>
+                    )}
+                  </div>
+                )}
 
-                  {[1, 2, 3].map((set) => (
-                    <div key={set} style={{ marginBottom: "8px" }}>
+                {!fixture.played && (
+                  <form action={submitScore} style={{ marginTop: "10px" }}>
+                    <input type="hidden" name="fixture_id" value={fixture.id} />
+                    <input
+                      type="hidden"
+                      name="division_id"
+                      value={selectedDivisionId}
+                    />
+
+                    {[1, 2].map((set) => (
+                      <div key={set} style={{ marginBottom: "8px" }}>
+                        <div
+                          style={{
+                            fontSize: "13px",
+                            fontWeight: "bold",
+                            color: "#222222",
+                            marginBottom: "4px",
+                          }}
+                        >
+                          Set {set}
+                        </div>
+
+                        <div style={{ display: "flex", gap: "8px" }}>
+                          <input
+                            name={`home_set${set}`}
+                            type="number"
+                            placeholder="Home"
+                            required
+                            style={inputStyle}
+                          />
+
+                          <input
+                            name={`away_set${set}`}
+                            type="number"
+                            placeholder="Away"
+                            required
+                            style={inputStyle}
+                          />
+                        </div>
+                      </div>
+                    ))}
+
+                    <div style={{ marginBottom: "8px" }}>
                       <div
                         style={{
                           fontSize: "13px",
@@ -474,62 +548,60 @@ export default async function Home({
                           marginBottom: "4px",
                         }}
                       >
-                        Set {set}
+                        Set 3 Decider Only
                       </div>
 
                       <div style={{ display: "flex", gap: "8px" }}>
                         <input
-                          name={`home_set${set}`}
+                          name="home_set3"
                           type="number"
                           placeholder="Home"
-                          required
                           style={inputStyle}
                         />
 
                         <input
-                          name={`away_set${set}`}
+                          name="away_set3"
                           type="number"
                           placeholder="Away"
-                          required
                           style={inputStyle}
                         />
                       </div>
                     </div>
-                  ))}
 
-                  <button
-                    type="submit"
+                    <button
+                      type="submit"
+                      style={{
+                        width: "100%",
+                        background: primary,
+                        color: textColor,
+                        padding: "12px",
+                        borderRadius: "8px",
+                        border: "none",
+                        marginTop: "6px",
+                        fontWeight: "bold",
+                        fontSize: "16px",
+                      }}
+                    >
+                      Save Result
+                    </button>
+                  </form>
+                )}
+
+                {fixture.played && (
+                  <div
                     style={{
-                      width: "100%",
-                      background: primary,
-                      color: textColor,
-                      padding: "12px",
-                      borderRadius: "8px",
-                      border: "none",
-                      marginTop: "6px",
+                      textAlign: "center",
+                      color: primary,
                       fontWeight: "bold",
-                      fontSize: "16px",
+                      marginTop: "8px",
                     }}
                   >
-                    Save Result
-                  </button>
-                </form>
-              )}
-
-              {fixture.played && (
-                <div
-                  style={{
-                    textAlign: "center",
-                    color: primary,
-                    fontWeight: "bold",
-                    marginTop: "8px",
-                  }}
-                >
-                  Result submitted
-                </div>
-              )}
-            </div>
-          ))}
+                    Result submitted
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       ))}
     </main>
