@@ -128,12 +128,16 @@ export default async function SummaryPage({
 
         .fixture-item {
           border-bottom: 1px solid #ddd;
-          padding: 8px 0;
+          padding: 7px 0;
+          min-height: 78px;
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
         }
 
         .fixture-row {
           display: grid;
-          grid-template-columns: minmax(0, 1fr) 54px minmax(0, 1fr);
+          grid-template-columns: minmax(0, 1fr) 58px minmax(0, 1fr);
           align-items: center;
           gap: 8px;
           font-weight: 900;
@@ -143,13 +147,18 @@ export default async function SummaryPage({
         .team-name {
           color: #000;
           font-size: 14px;
-          line-height: 1.15;
+          line-height: 1.1;
           word-break: normal;
-          overflow-wrap: normal;
+          overflow-wrap: break-word;
         }
 
         .team-name.right {
           text-align: right;
+        }
+
+        .team-name a {
+          color: inherit;
+          text-decoration: none;
         }
 
         .score-pill {
@@ -161,12 +170,14 @@ export default async function SummaryPage({
           text-align: center;
           font-size: 15px;
           white-space: nowrap;
+          min-width: 58px;
+          box-sizing: border-box;
         }
 
         .sets {
           text-align: center;
           font-size: 11px;
-          margin-top: 5px;
+          margin-top: 6px;
           color: #333;
           white-space: nowrap;
         }
@@ -270,27 +281,29 @@ export default async function SummaryPage({
         }
 
         .screenshot .fixture-item {
-          padding: 7px 0;
+          padding: 6px 0;
+          min-height: 78px;
         }
 
         .screenshot .fixture-row {
-          grid-template-columns: minmax(0, 1fr) 52px minmax(0, 1fr);
+          grid-template-columns: minmax(0, 1fr) 58px minmax(0, 1fr);
           gap: 7px;
         }
 
         .screenshot .team-name {
           font-size: 14px;
-          line-height: 1.15;
+          line-height: 1.1;
         }
 
         .screenshot .score-pill {
           font-size: 15px;
           padding: 7px 7px;
+          min-width: 58px;
         }
 
         .screenshot .sets {
           font-size: 11px;
-          margin-top: 4px;
+          margin-top: 5px;
         }
       `}</style>
 
@@ -395,7 +408,9 @@ export default async function SummaryPage({
                     <div key={fixture.id} className="fixture-item">
                       <div className="fixture-row">
                         <div className="team-name">
-                          {getTeamName(fixture.home_team_id)}
+                          <a href={`/team/${fixture.home_team_id}`}>
+                            {getTeamName(fixture.home_team_id)}
+                          </a>
                         </div>
 
                         <div className="score-pill">
@@ -405,7 +420,9 @@ export default async function SummaryPage({
                         </div>
 
                         <div className="team-name right">
-                          {getTeamName(fixture.away_team_id)}
+                          <a href={`/team/${fixture.away_team_id}`}>
+                            {getTeamName(fixture.away_team_id)}
+                          </a>
                         </div>
                       </div>
 
