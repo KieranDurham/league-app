@@ -18,11 +18,8 @@ async function submitScore(formData: FormData) {
   const rawH3 = formData.get("home_set3");
   const rawA3 = formData.get("away_set3");
 
-  const h3 =
-    rawH3 === null || rawH3 === "" ? null : Number(rawH3);
-
-  const a3 =
-    rawA3 === null || rawA3 === "" ? null : Number(rawA3);
+  const h3 = rawH3 === null || rawH3 === "" ? null : Number(rawH3);
+  const a3 = rawA3 === null || rawA3 === "" ? null : Number(rawA3);
 
   let homeSets = 0;
   let awaySets = 0;
@@ -86,8 +83,67 @@ export default async function Home({
     .eq("division_id", selectedDivisionId)
     .order("round", { ascending: true });
 
+  const fixtureIds = fixtures?.map((fixture: any) => fixture.id) || [];
+
+  const missingPaymentsToCreate: any[] = [];
+
+  fixtures?.forEach((fixture: any) => {
+    const homeTeam = teams?.find(
+      (team: any) => Number(team.id) === Number(fixture.home_team_id)
+    );
+
+    const awayTeam = teams?.find(
+      (team: any) => Number(team.id) === Number(fixture.away_team_id)
+    );
+
+    [homeTeam, awayTeam].forEach((team: any) => {
+      if (!team?.name) return;
+
+      const players = String(team.name)
+        .split("&")
+        .map((name: string) => name.trim())
+        .filter(Boolean);
+
+      players.forEach((playerName: string) => {
+        missingPaymentsToCreate.push({
+          fixture_id: fixture.id,
+          team_id: team.id,
+          player_name: playerName,
+          amount_due: 11,
+          amount_paid: 0,
+          status: "unpaid",
+        });
+      });
+    });
+  });
+
+  if (missingPaymentsToCreate.length > 0) {
+    await supabase.from("fixture_payments").upsert(missingPaymentsToCreate, {
+      onConflict: "fixture_id,team_id,player_name",
+      ignoreDuplicates: true,
+    });
+  }
+
+  const { data: payments } =
+    fixtureIds.length > 0
+      ? await supabase
+          .from("fixture_payments")
+          .select("*")
+          .in("fixture_id", fixtureIds)
+          .order("id", { ascending: true })
+      : { data: [] };
+
+  const fixturesWithPayments =
+    fixtures?.map((fixture: any) => ({
+      ...fixture,
+      fixture_payments:
+        payments?.filter(
+          (payment: any) => Number(payment.fixture_id) === Number(fixture.id)
+        ) || [],
+    })) || [];
+
   const currentDivision =
-    divisions?.find((d: any) => d.id === selectedDivisionId) || {};
+    divisions?.find((d: any) => Number(d.id) === selectedDivisionId) || {};
 
   const primary = currentDivision.primary_color || "#000000";
   const secondary = currentDivision.secondary_color || "#ffffff";
@@ -108,7 +164,7 @@ export default async function Home({
     };
   });
 
-  fixtures?.forEach((fixture: any) => {
+  fixturesWithPayments.forEach((fixture: any) => {
     if (!fixture.played) return;
 
     const home = table[fixture.home_team_id];
@@ -119,13 +175,8 @@ export default async function Home({
     home.played += 1;
     away.played += 1;
 
-    let homeGames =
-      (fixture.home_set1 || 0) +
-      (fixture.home_set2 || 0);
-
-    let awayGames =
-      (fixture.away_set1 || 0) +
-      (fixture.away_set2 || 0);
+    let homeGames = (fixture.home_set1 || 0) + (fixture.home_set2 || 0);
+    let awayGames = (fixture.away_set1 || 0) + (fixture.away_set2 || 0);
 
     const homeFirstTwoSets =
       (fixture.home_set1 > fixture.away_set1 ? 1 : 0) +
@@ -164,22 +215,40 @@ export default async function Home({
 
   const leagueTable = Object.values(table).sort((a: any, b: any) => {
     if (b.points !== a.points) return b.points - a.points;
+
     if (b.goal_difference !== a.goal_difference) {
       return b.goal_difference - a.goal_difference;
     }
+
     if (b.won !== a.won) return b.won - a.won;
+
     return a.name.localeCompare(b.name);
   });
 
-  const groupedFixtures = (fixtures || []).reduce((acc: any, fixture: any) => {
+  const groupedFixtures = fixturesWithPayments.reduce((acc: any, fixture: any) => {
     const round = fixture.round || 1;
+
     if (!acc[round]) acc[round] = [];
+
     acc[round].push(fixture);
+
     return acc;
   }, {});
 
   const getTeamName = (id: number) => {
-    return teams?.find((team: any) => team.id === id)?.name || "Unknown";
+    return (
+      teams?.find((team: any) => Number(team.id) === Number(id))?.name ||
+      "Unknown"
+    );
+  };
+
+  const getInitials = (name: string) => {
+    return String(name)
+      .split(" ")
+      .map((part: string) => part[0])
+      .join("")
+      .slice(0, 2)
+      .toUpperCase();
   };
 
   const teamLinkStyle = {
@@ -390,7 +459,7 @@ export default async function Home({
 
       <h2 style={{ marginTop: "20px", color: "#000000" }}>Fixtures</h2>
 
-      {fixtures?.length === 0 && (
+      {fixturesWithPayments.length === 0 && (
         <p style={{ color: "#222222", fontWeight: "500" }}>
           No fixtures added.
         </p>
@@ -415,6 +484,18 @@ export default async function Home({
               fixture.played &&
               fixture.home_set3 !== null &&
               fixture.away_set3 !== null;
+
+            const homePayments =
+              fixture.fixture_payments?.filter(
+                (payment: any) =>
+                  Number(payment.team_id) === Number(fixture.home_team_id)
+              ) || [];
+
+            const awayPayments =
+              fixture.fixture_payments?.filter(
+                (payment: any) =>
+                  Number(payment.team_id) === Number(fixture.away_team_id)
+              ) || [];
 
             return (
               <div
@@ -476,6 +557,314 @@ export default async function Home({
                   </strong>
                 </div>
 
+                <div
+                  style={{
+                    border: "1px solid #e5e7eb",
+                    borderRadius: "18px",
+                    padding: "22px",
+                    marginBottom: "14px",
+                    background: "#ffffff",
+                    boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
+                  }}
+                >
+                  {fixture.fixture_payments?.length > 0 ? (
+                    <div
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns: "1fr 1px 1fr",
+                        gap: "20px",
+                        alignItems: "stretch",
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns: "1fr 1fr",
+                          gap: "18px",
+                          textAlign: "center",
+                        }}
+                      >
+                        {homePayments.map((payment: any) => {
+                          const amountDue = Number(payment.amount_due || 0);
+                          const amountPaid = Number(payment.amount_paid || 0);
+                          const remaining = amountDue - amountPaid;
+                          const isPaid = remaining <= 0;
+
+                          return (
+                            <div key={payment.id}>
+                              <div
+                                style={{
+                                  width: "86px",
+                                  height: "86px",
+                                  borderRadius: "50%",
+                                  background: "#12202f",
+                                  color: "#ffffff",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  margin: "0 auto 10px",
+                                  fontSize: "30px",
+                                  fontWeight: "500",
+                                }}
+                              >
+                                {getInitials(payment.player_name)}
+                              </div>
+
+                              <div
+                                style={{
+                                  fontSize: "22px",
+                                  fontWeight: "500",
+                                  color: "#12202f",
+                                  whiteSpace: "nowrap",
+                                  overflow: "hidden",
+                                  textOverflow: "ellipsis",
+                                }}
+                              >
+                                {payment.player_name}
+                              </div>
+
+                              <div
+                                style={{
+                                  display: "inline-block",
+                                  background: "#caff3d",
+                                  padding: "4px 12px",
+                                  borderRadius: "999px",
+                                  marginTop: "8px",
+                                  fontWeight: "bold",
+                                  fontSize: "18px",
+                                  color: "#12202f",
+                                }}
+                              >
+                                £{amountDue}
+                              </div>
+
+                              <div
+                                style={{
+                                  marginTop: "12px",
+                                  fontSize: "20px",
+                                  fontWeight: "bold",
+                                  color: isPaid ? "#12202f" : "#cc0000",
+                                }}
+                              >
+                                {isPaid ? "Paid" : "Not paid"}
+                              </div>
+
+                              {isPaid ? (
+                                <div
+                                  style={{
+                                    fontSize: "34px",
+                                    marginTop: "8px",
+                                  }}
+                                >
+                                  🪙
+                                </div>
+                              ) : (
+                                <form
+                                  action="/api/create-checkout-session"
+                                  method="POST"
+                                >
+                                  <input
+                                    type="hidden"
+                                    name="payment_id"
+                                    value={payment.id}
+                                  />
+
+                                  <input
+                                    type="hidden"
+                                    name="amount"
+                                    value={remaining}
+                                  />
+
+                                  <button
+                                    type="submit"
+                                    style={{
+                                      marginTop: "10px",
+                                      background: primary,
+                                      color: textColor,
+                                      border: "none",
+                                      padding: "8px 12px",
+                                      borderRadius: "8px",
+                                      fontWeight: "bold",
+                                      cursor: "pointer",
+                                    }}
+                                  >
+                                    Pay £{remaining}
+                                  </button>
+                                </form>
+                              )}
+                            </div>
+                          );
+                        })}
+
+                        <div
+                          style={{
+                            gridColumn: "1 / -1",
+                            textAlign: "left",
+                            fontSize: "34px",
+                            fontWeight: "bold",
+                            color: "#6b7280",
+                            marginTop: "14px",
+                          }}
+                        >
+                          A
+                        </div>
+                      </div>
+
+                      <div
+                        style={{
+                          background: "#d1d5db",
+                          width: "1px",
+                          minHeight: "220px",
+                        }}
+                      />
+
+                      <div
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns: "1fr 1fr",
+                          gap: "18px",
+                          textAlign: "center",
+                        }}
+                      >
+                        {awayPayments.map((payment: any) => {
+                          const amountDue = Number(payment.amount_due || 0);
+                          const amountPaid = Number(payment.amount_paid || 0);
+                          const remaining = amountDue - amountPaid;
+                          const isPaid = remaining <= 0;
+
+                          return (
+                            <div key={payment.id}>
+                              <div
+                                style={{
+                                  width: "86px",
+                                  height: "86px",
+                                  borderRadius: "50%",
+                                  background: "#12202f",
+                                  color: "#ffffff",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  margin: "0 auto 10px",
+                                  fontSize: "30px",
+                                  fontWeight: "500",
+                                }}
+                              >
+                                {getInitials(payment.player_name)}
+                              </div>
+
+                              <div
+                                style={{
+                                  fontSize: "22px",
+                                  fontWeight: "500",
+                                  color: "#12202f",
+                                  whiteSpace: "nowrap",
+                                  overflow: "hidden",
+                                  textOverflow: "ellipsis",
+                                }}
+                              >
+                                {payment.player_name}
+                              </div>
+
+                              <div
+                                style={{
+                                  display: "inline-block",
+                                  background: "#caff3d",
+                                  padding: "4px 12px",
+                                  borderRadius: "999px",
+                                  marginTop: "8px",
+                                  fontWeight: "bold",
+                                  fontSize: "18px",
+                                  color: "#12202f",
+                                }}
+                              >
+                                £{amountDue}
+                              </div>
+
+                              <div
+                                style={{
+                                  marginTop: "12px",
+                                  fontSize: "20px",
+                                  fontWeight: "bold",
+                                  color: isPaid ? "#12202f" : "#cc0000",
+                                }}
+                              >
+                                {isPaid ? "Paid" : "Not paid"}
+                              </div>
+
+                              {isPaid ? (
+                                <div
+                                  style={{
+                                    fontSize: "34px",
+                                    marginTop: "8px",
+                                  }}
+                                >
+                                  🪙
+                                </div>
+                              ) : (
+                                <form
+                                  action="/api/create-checkout-session"
+                                  method="POST"
+                                >
+                                  <input
+                                    type="hidden"
+                                    name="payment_id"
+                                    value={payment.id}
+                                  />
+
+                                  <input
+                                    type="hidden"
+                                    name="amount"
+                                    value={remaining}
+                                  />
+
+                                  <button
+                                    type="submit"
+                                    style={{
+                                      marginTop: "10px",
+                                      background: primary,
+                                      color: textColor,
+                                      border: "none",
+                                      padding: "8px 12px",
+                                      borderRadius: "8px",
+                                      fontWeight: "bold",
+                                      cursor: "pointer",
+                                    }}
+                                  >
+                                    Pay £{remaining}
+                                  </button>
+                                </form>
+                              )}
+                            </div>
+                          );
+                        })}
+
+                        <div
+                          style={{
+                            gridColumn: "1 / -1",
+                            textAlign: "right",
+                            fontSize: "34px",
+                            fontWeight: "bold",
+                            color: "#6b7280",
+                            marginTop: "14px",
+                          }}
+                        >
+                          B
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <p
+                      style={{
+                        margin: 0,
+                        color: "#555555",
+                        fontSize: "13px",
+                      }}
+                    >
+                      No payment records found for this fixture.
+                    </p>
+                  )}
+                </div>
+
                 {fixture.played && (
                   <div
                     style={{
@@ -500,6 +889,7 @@ export default async function Home({
                 {!fixture.played && (
                   <form action={submitScore} style={{ marginTop: "10px" }}>
                     <input type="hidden" name="fixture_id" value={fixture.id} />
+
                     <input
                       type="hidden"
                       name="division_id"
