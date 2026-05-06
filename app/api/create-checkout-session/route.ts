@@ -27,8 +27,8 @@ export async function POST(req: Request) {
         },
       ],
 
-      success_url: `http://localhost:3000/api/payment-success?payment_id=${paymentId}`,
-      cancel_url: "http://localhost:3000?cancelled=true",
+  success_url: `https://league-app-plum.vercel.app/api/payment-success?payment_id=${paymentId}`,
+cancel_url: "https://league-app-plum.vercel.app?cancelled=true",
 
       metadata: {
         payment_id: String(paymentId),
