@@ -9,6 +9,7 @@ async function submitScore(formData: FormData) {
 
   const fixtureId = Number(formData.get("fixture_id"));
   const divisionId = Number(formData.get("division_id"));
+  const currentView = String(formData.get("view") || "upcoming");
 
   const h1 = Number(formData.get("home_set1"));
   const a1 = Number(formData.get("away_set1"));
@@ -56,16 +57,22 @@ async function submitScore(formData: FormData) {
   revalidatePath("/summary");
   revalidatePath(`/team/${fixtureId}`);
 
-  redirect(`/?division=${divisionId}`);
+  redirect(`/?division=${divisionId}&view=${currentView}`);
 }
 
 export default async function Home({
   searchParams,
 }: {
-  searchParams?: Promise<{ division?: string }>;
+  searchParams?: Promise<{ division?: string; view?: string }>;
 }) {
   const params = await searchParams;
+
   const selectedDivisionId = Number(params?.division || 1);
+
+  const selectedView =
+    params?.view === "all" || params?.view === "results"
+      ? params.view
+      : "upcoming";
 
   const { data: divisions } = await supabase
     .from("divisions")
@@ -225,7 +232,13 @@ export default async function Home({
     return a.name.localeCompare(b.name);
   });
 
-  const groupedFixtures = fixturesWithPayments.reduce((acc: any, fixture: any) => {
+  const displayedFixtures = fixturesWithPayments.filter((fixture: any) => {
+    if (selectedView === "all") return true;
+    if (selectedView === "results") return fixture.played;
+    return !fixture.played;
+  });
+
+  const groupedFixtures = displayedFixtures.reduce((acc: any, fixture: any) => {
     const round = fixture.round || 1;
 
     if (!acc[round]) acc[round] = [];
@@ -234,6 +247,10 @@ export default async function Home({
 
     return acc;
   }, {});
+
+  const roundNumbers = Object.keys(groupedFixtures)
+    .map((round) => Number(round))
+    .sort((a, b) => a - b);
 
   const getTeamName = (id: number) => {
     return (
@@ -267,8 +284,21 @@ export default async function Home({
     background: "#ffffff",
   };
 
+  const viewButtonStyle = (view: string) => ({
+    display: "inline-block",
+    padding: "10px 14px",
+    borderRadius: "999px",
+    background: selectedView === view ? primary : "#eeeeee",
+    color: selectedView === view ? textColor : "#000000",
+    textDecoration: "none",
+    fontWeight: "bold",
+    border: `1px solid ${selectedView === view ? primary : "#dddddd"}`,
+    whiteSpace: "nowrap" as const,
+  });
+
   return (
     <main
+      id="top"
       style={{
         padding: "14px",
         maxWidth: "900px",
@@ -321,14 +351,14 @@ export default async function Home({
           display: "flex",
           gap: "8px",
           overflowX: "auto",
-          marginBottom: "20px",
+          marginBottom: "14px",
           paddingBottom: "6px",
         }}
       >
         {divisions?.map((division: any) => (
           <a
             key={division.id}
-            href={`/?division=${division.id}`}
+            href={`/?division=${division.id}&view=${selectedView}`}
             style={{
               padding: "10px 14px",
               borderRadius: "999px",
@@ -346,6 +376,107 @@ export default async function Home({
           </a>
         ))}
       </div>
+
+      <div
+        style={{
+          marginBottom: "14px",
+          padding: "12px",
+          border: `2px solid ${primary}`,
+          borderRadius: "12px",
+          background: "#ffffff",
+        }}
+      >
+        <div
+          style={{
+            fontWeight: "bold",
+            marginBottom: "8px",
+            color: "#111111",
+          }}
+        >
+          Show fixtures
+        </div>
+
+        <div
+          style={{
+            display: "flex",
+            gap: "8px",
+            overflowX: "auto",
+            paddingBottom: "4px",
+          }}
+        >
+          <a
+            href={`/?division=${selectedDivisionId}&view=upcoming`}
+            style={viewButtonStyle("upcoming")}
+          >
+            Upcoming only
+          </a>
+
+          <a
+            href={`/?division=${selectedDivisionId}&view=all`}
+            style={viewButtonStyle("all")}
+          >
+            All fixtures
+          </a>
+
+          <a
+            href={`/?division=${selectedDivisionId}&view=results`}
+            style={viewButtonStyle("results")}
+          >
+            Results only
+          </a>
+        </div>
+      </div>
+
+      {roundNumbers.length > 0 && (
+        <div
+          style={{
+            marginBottom: "20px",
+            padding: "12px",
+            borderRadius: "12px",
+            background: "#ffffff",
+            border: "1px solid #dddddd",
+          }}
+        >
+          <div
+            style={{
+              fontWeight: "bold",
+              marginBottom: "8px",
+              color: "#111111",
+            }}
+          >
+            Jump to round
+          </div>
+
+          <div
+            style={{
+              display: "flex",
+              gap: "8px",
+              overflowX: "auto",
+              paddingBottom: "4px",
+            }}
+          >
+            {roundNumbers.map((round) => (
+              <a
+                key={round}
+                href={`#round-${round}`}
+                style={{
+                  minWidth: "44px",
+                  textAlign: "center",
+                  padding: "9px 12px",
+                  borderRadius: "999px",
+                  background: primary,
+                  color: textColor,
+                  textDecoration: "none",
+                  fontWeight: "bold",
+                  border: `1px solid ${primary}`,
+                }}
+              >
+                {round}
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div style={{ marginBottom: "20px", textAlign: "center" }}>
         <a
@@ -457,16 +588,21 @@ export default async function Home({
         </table>
       </div>
 
-      <h2 style={{ marginTop: "20px", color: "#000000" }}>Fixtures</h2>
+      <h2 style={{ marginTop: "20px", color: "#000000" }}>
+        Fixtures
+        {selectedView === "upcoming" && " - Upcoming only"}
+        {selectedView === "all" && " - All fixtures"}
+        {selectedView === "results" && " - Results only"}
+      </h2>
 
-      {fixturesWithPayments.length === 0 && (
+      {displayedFixtures.length === 0 && (
         <p style={{ color: "#222222", fontWeight: "500" }}>
-          No fixtures added.
+          No fixtures found for this view.
         </p>
       )}
 
       {Object.entries(groupedFixtures).map(([round, roundFixtures]: any) => (
-        <div key={round}>
+        <div key={round} id={`round-${round}`}>
           <h3
             style={{
               background: primary,
@@ -474,6 +610,7 @@ export default async function Home({
               padding: "8px 12px",
               borderRadius: "8px",
               marginTop: "14px",
+              scrollMarginTop: "20px",
             }}
           >
             Round {round}
@@ -896,6 +1033,8 @@ export default async function Home({
                       value={selectedDivisionId}
                     />
 
+                    <input type="hidden" name="view" value={selectedView} />
+
                     {[1, 2].map((set) => (
                       <div key={set} style={{ marginBottom: "8px" }}>
                         <div
@@ -992,6 +1131,24 @@ export default async function Home({
               </div>
             );
           })}
+
+          <div style={{ textAlign: "center", margin: "14px 0 22px" }}>
+            <a
+              href="#top"
+              style={{
+                display: "inline-block",
+                background: "#eeeeee",
+                color: "#000000",
+                padding: "9px 14px",
+                borderRadius: "999px",
+                textDecoration: "none",
+                fontWeight: "bold",
+                border: "1px solid #dddddd",
+              }}
+            >
+              ↑ Back to top
+            </a>
+          </div>
         </div>
       ))}
     </main>
