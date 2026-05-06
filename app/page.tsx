@@ -9,7 +9,6 @@ async function submitScore(formData: FormData) {
 
   const fixtureId = Number(formData.get("fixture_id"));
   const divisionId = Number(formData.get("division_id"));
-  const currentView = String(formData.get("view") || "upcoming");
 
   const h1 = Number(formData.get("home_set1"));
   const a1 = Number(formData.get("away_set1"));
@@ -57,22 +56,17 @@ async function submitScore(formData: FormData) {
   revalidatePath("/summary");
   revalidatePath(`/team/${fixtureId}`);
 
-  redirect(`/?division=${divisionId}&view=${currentView}`);
+  redirect(`/?division=${divisionId}`);
 }
 
 export default async function Home({
   searchParams,
 }: {
-  searchParams?: Promise<{ division?: string; view?: string }>;
+  searchParams?: Promise<{ division?: string }>;
 }) {
   const params = await searchParams;
 
   const selectedDivisionId = Number(params?.division || 1);
-
-  const selectedView =
-    params?.view === "all" || params?.view === "results"
-      ? params.view
-      : "upcoming";
 
   const { data: divisions } = await supabase
     .from("divisions")
@@ -232,13 +226,7 @@ export default async function Home({
     return a.name.localeCompare(b.name);
   });
 
-  const displayedFixtures = fixturesWithPayments.filter((fixture: any) => {
-    if (selectedView === "all") return true;
-    if (selectedView === "results") return fixture.played;
-    return !fixture.played;
-  });
-
-  const groupedFixtures = displayedFixtures.reduce((acc: any, fixture: any) => {
+  const groupedFixtures = fixturesWithPayments.reduce((acc: any, fixture: any) => {
     const round = fixture.round || 1;
 
     if (!acc[round]) acc[round] = [];
@@ -283,18 +271,6 @@ export default async function Home({
     color: "#000000",
     background: "#ffffff",
   };
-
-  const viewButtonStyle = (view: string) => ({
-    display: "inline-block",
-    padding: "10px 14px",
-    borderRadius: "999px",
-    background: selectedView === view ? primary : "#eeeeee",
-    color: selectedView === view ? textColor : "#000000",
-    textDecoration: "none",
-    fontWeight: "bold",
-    border: `1px solid ${selectedView === view ? primary : "#dddddd"}`,
-    whiteSpace: "nowrap" as const,
-  });
 
   return (
     <main
@@ -358,7 +334,7 @@ export default async function Home({
         {divisions?.map((division: any) => (
           <a
             key={division.id}
-            href={`/?division=${division.id}&view=${selectedView}`}
+            href={`/?division=${division.id}`}
             style={{
               padding: "10px 14px",
               borderRadius: "999px",
@@ -375,56 +351,6 @@ export default async function Home({
             {division.name}
           </a>
         ))}
-      </div>
-
-      <div
-        style={{
-          marginBottom: "14px",
-          padding: "12px",
-          border: `2px solid ${primary}`,
-          borderRadius: "12px",
-          background: "#ffffff",
-        }}
-      >
-        <div
-          style={{
-            fontWeight: "bold",
-            marginBottom: "8px",
-            color: "#111111",
-          }}
-        >
-          Show fixtures
-        </div>
-
-        <div
-          style={{
-            display: "flex",
-            gap: "8px",
-            overflowX: "auto",
-            paddingBottom: "4px",
-          }}
-        >
-          <a
-            href={`/?division=${selectedDivisionId}&view=upcoming`}
-            style={viewButtonStyle("upcoming")}
-          >
-            Upcoming only
-          </a>
-
-          <a
-            href={`/?division=${selectedDivisionId}&view=all`}
-            style={viewButtonStyle("all")}
-          >
-            All fixtures
-          </a>
-
-          <a
-            href={`/?division=${selectedDivisionId}&view=results`}
-            style={viewButtonStyle("results")}
-          >
-            Results only
-          </a>
-        </div>
       </div>
 
       {roundNumbers.length > 0 && (
@@ -588,16 +514,11 @@ export default async function Home({
         </table>
       </div>
 
-      <h2 style={{ marginTop: "20px", color: "#000000" }}>
-        Fixtures
-        {selectedView === "upcoming" && " - Upcoming only"}
-        {selectedView === "all" && " - All fixtures"}
-        {selectedView === "results" && " - Results only"}
-      </h2>
+      <h2 style={{ marginTop: "20px", color: "#000000" }}>Fixtures</h2>
 
-      {displayedFixtures.length === 0 && (
+      {fixturesWithPayments.length === 0 && (
         <p style={{ color: "#222222", fontWeight: "500" }}>
-          No fixtures found for this view.
+          No fixtures added.
         </p>
       )}
 
@@ -1032,8 +953,6 @@ export default async function Home({
                       name="division_id"
                       value={selectedDivisionId}
                     />
-
-                    <input type="hidden" name="view" value={selectedView} />
 
                     {[1, 2].map((set) => (
                       <div key={set} style={{ marginBottom: "8px" }}>
