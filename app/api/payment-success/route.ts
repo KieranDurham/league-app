@@ -20,5 +20,7 @@ export async function GET(req: Request) {
     }
   }
 
-  return NextResponse.redirect("http://localhost:3000");
+  return NextResponse.redirect(
+    "https://league-app-plum.vercel.app/payment-success"
+  );
 }
