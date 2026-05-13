@@ -336,8 +336,7 @@ export default async function Home({
       (fixture.away_set1 > fixture.home_set1 ? 1 : 0) +
       (fixture.away_set2 > fixture.home_set2 ? 1 : 0);
 
-    const thirdSetWasNeeded =
-      homeFirstTwoSets === 1 && awayFirstTwoSets === 1;
+    const thirdSetWasNeeded = homeFirstTwoSets === 1 && awayFirstTwoSets === 1;
 
     if (thirdSetWasNeeded) {
       homeGames += fixture.home_set3 || 0;
@@ -409,6 +408,8 @@ export default async function Home({
     color: "inherit",
     textDecoration: "none",
     fontWeight: "bold",
+    overflowWrap: "break-word" as const,
+    wordBreak: "break-word" as const,
   };
 
   const inputStyle = {
@@ -440,12 +441,15 @@ export default async function Home({
       id="top"
       style={{
         padding: "14px",
+        width: "100%",
         maxWidth: "900px",
         margin: "0 auto",
         background: secondary,
         minHeight: "100vh",
         color: "#000000",
         fontFamily: "Arial",
+        overflowX: "hidden",
+        boxSizing: "border-box",
       }}
     >
       <div style={{ marginBottom: "14px" }}>
@@ -499,6 +503,8 @@ export default async function Home({
           borderRadius: "10px",
           textAlign: "center",
           marginBottom: "12px",
+          fontSize: "26px",
+          overflowWrap: "break-word",
         }}
       >
         {currentDivision.name}
@@ -528,6 +534,7 @@ export default async function Home({
           overflowX: "auto",
           marginBottom: "14px",
           paddingBottom: "6px",
+          maxWidth: "100%",
         }}
       >
         {divisions?.map((division: any) => (
@@ -560,6 +567,8 @@ export default async function Home({
             borderRadius: "12px",
             background: "#ffffff",
             border: "1px solid #dddddd",
+            width: "100%",
+            overflow: "hidden",
           }}
         >
           <div
@@ -578,6 +587,7 @@ export default async function Home({
               gap: "8px",
               overflowX: "auto",
               paddingBottom: "4px",
+              maxWidth: "100%",
             }}
           >
             {roundNumbers.map((round) => (
@@ -631,6 +641,7 @@ export default async function Home({
           borderRadius: "10px",
           background: "#ffffff",
           marginBottom: "26px",
+          maxWidth: "100%",
         }}
       >
         <table
@@ -638,6 +649,7 @@ export default async function Home({
             width: "100%",
             borderCollapse: "collapse",
             color: "#000000",
+            minWidth: "520px",
           }}
         >
           <thead style={{ background: primary, color: textColor }}>
@@ -654,10 +666,7 @@ export default async function Home({
 
           <tbody>
             {leagueTable.map((team: any) => (
-              <tr
-                key={team.id}
-                style={{ borderBottom: `1px solid ${primary}` }}
-              >
+              <tr key={team.id} style={{ borderBottom: `1px solid ${primary}` }}>
                 <td
                   style={{
                     padding: "10px",
@@ -726,6 +735,8 @@ export default async function Home({
             padding: "14px",
             marginBottom: "20px",
             boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
+            width: "100%",
+            overflow: "hidden",
           }}
         >
           <h3
@@ -767,12 +778,12 @@ export default async function Home({
             <div
               style={{
                 display: "grid",
-                gridTemplateColumns: "1fr 1fr",
+                gridTemplateColumns: "minmax(0,1fr) minmax(0,1fr)",
                 gap: "10px",
                 marginBottom: "10px",
               }}
             >
-              <div>
+              <div style={{ minWidth: 0 }}>
                 <label
                   style={{
                     display: "block",
@@ -793,7 +804,7 @@ export default async function Home({
                 />
               </div>
 
-              <div>
+              <div style={{ minWidth: 0 }}>
                 <label
                   style={{
                     display: "block",
@@ -902,7 +913,7 @@ export default async function Home({
       )}
 
       {Object.entries(groupedFixtures).map(([round, roundFixtures]: any) => (
-        <div key={round} id={`round-${round}`}>
+        <div key={round} id={`round-${round}`} style={{ width: "100%" }}>
           <h3
             style={{
               background: primary,
@@ -944,6 +955,10 @@ export default async function Home({
                   marginBottom: "12px",
                   background: "#ffffff",
                   color: "#000000",
+                  width: "100%",
+                  maxWidth: "100%",
+                  minWidth: 0,
+                  overflow: "hidden",
                 }}
               >
                 {(fixture.fixture_day || fixture.fixture_time) && (
@@ -968,17 +983,22 @@ export default async function Home({
                 <div
                   style={{
                     display: "grid",
-                    gridTemplateColumns: "1fr auto 1fr",
+                    gridTemplateColumns: "minmax(0,1fr) auto minmax(0,1fr)",
                     gap: "8px",
                     alignItems: "center",
                     marginBottom: "10px",
+                    width: "100%",
                   }}
                 >
-                  <strong style={{ color: "#111111", fontSize: "15px" }}>
-                    <a
-                      href={`/team/${fixture.home_team_id}`}
-                      style={teamLinkStyle}
-                    >
+                  <strong
+                    style={{
+                      color: "#111111",
+                      fontSize: "14px",
+                      minWidth: 0,
+                      overflowWrap: "break-word",
+                    }}
+                  >
+                    <a href={`/team/${fixture.home_team_id}`} style={teamLinkStyle}>
                       {getTeamName(fixture.home_team_id)}
                     </a>
                   </strong>
@@ -988,8 +1008,8 @@ export default async function Home({
                       color: "#000000",
                       fontWeight: "bold",
                       textAlign: "center",
-                      minWidth: "55px",
-                      fontSize: "17px",
+                      minWidth: "45px",
+                      fontSize: "16px",
                     }}
                   >
                     {fixture.played
@@ -1000,14 +1020,13 @@ export default async function Home({
                   <strong
                     style={{
                       color: "#111111",
-                      fontSize: "15px",
+                      fontSize: "14px",
                       textAlign: "right",
+                      minWidth: 0,
+                      overflowWrap: "break-word",
                     }}
                   >
-                    <a
-                      href={`/team/${fixture.away_team_id}`}
-                      style={teamLinkStyle}
-                    >
+                    <a href={`/team/${fixture.away_team_id}`} style={teamLinkStyle}>
                       {getTeamName(fixture.away_team_id)}
                     </a>
                   </strong>
@@ -1021,6 +1040,8 @@ export default async function Home({
                       padding: "12px",
                       marginBottom: "12px",
                       background: "#f9fafb",
+                      width: "100%",
+                      overflow: "hidden",
                     }}
                   >
                     <div
@@ -1035,18 +1056,26 @@ export default async function Home({
 
                     <form action={updateFixture}>
                       <input type="hidden" name="fixture_id" value={fixture.id} />
-                      <input type="hidden" name="division_id" value={selectedDivisionId} />
-                      <input type="hidden" name="league_type" value={selectedLeague} />
+                      <input
+                        type="hidden"
+                        name="division_id"
+                        value={selectedDivisionId}
+                      />
+                      <input
+                        type="hidden"
+                        name="league_type"
+                        value={selectedLeague}
+                      />
 
                       <div
                         style={{
                           display: "grid",
-                          gridTemplateColumns: "1fr 1fr",
+                          gridTemplateColumns: "minmax(0,1fr) minmax(0,1fr)",
                           gap: "10px",
                           marginBottom: "10px",
                         }}
                       >
-                        <div>
+                        <div style={{ minWidth: 0 }}>
                           <div
                             style={{
                               fontSize: "13px",
@@ -1066,7 +1095,7 @@ export default async function Home({
                           />
                         </div>
 
-                        <div>
+                        <div style={{ minWidth: 0 }}>
                           <div
                             style={{
                               fontSize: "13px",
@@ -1184,7 +1213,7 @@ export default async function Home({
                           borderRadius: "8px",
                           fontWeight: "bold",
                           cursor: "pointer",
-                          fontSize: "15px",
+                          fontSize: "16px",
                         }}
                       >
                         Save Fixture Changes
@@ -1194,13 +1223,18 @@ export default async function Home({
                 )}
 
                 {isAdmin && (
-                  <form
-                    action={togglePrivateGame}
-                    style={{ marginBottom: "10px" }}
-                  >
+                  <form action={togglePrivateGame} style={{ marginBottom: "10px" }}>
                     <input type="hidden" name="fixture_id" value={fixture.id} />
-                    <input type="hidden" name="division_id" value={selectedDivisionId} />
-                    <input type="hidden" name="league_type" value={selectedLeague} />
+                    <input
+                      type="hidden"
+                      name="division_id"
+                      value={selectedDivisionId}
+                    />
+                    <input
+                      type="hidden"
+                      name="league_type"
+                      value={selectedLeague}
+                    />
                     <input
                       type="hidden"
                       name="current_value"
@@ -1211,15 +1245,13 @@ export default async function Home({
                       type="submit"
                       style={{
                         width: "100%",
-                        background: fixture.is_private_game
-                          ? "#b91c1c"
-                          : primary,
+                        background: fixture.is_private_game ? "#b91c1c" : primary,
                         color: "#ffffff",
                         border: "none",
                         padding: "10px",
                         borderRadius: "8px",
                         fontWeight: "bold",
-                        fontSize: "15px",
+                        fontSize: "16px",
                         cursor: "pointer",
                       }}
                     >
@@ -1250,20 +1282,26 @@ export default async function Home({
                 <div
                   style={{
                     border: "1px solid #e5e7eb",
-                    borderRadius: "18px",
-                    padding: "22px",
+                    borderRadius: "14px",
+                    padding: "10px",
                     marginBottom: "14px",
                     background: "#ffffff",
                     boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
+                    width: "100%",
+                    maxWidth: "100%",
+                    overflow: "hidden",
                   }}
                 >
                   {fixture.fixture_payments?.length > 0 ? (
                     <div
                       style={{
                         display: "grid",
-                        gridTemplateColumns: "1fr 1px 1fr",
-                        gap: "20px",
+                        gridTemplateColumns: "minmax(0,1fr) 1px minmax(0,1fr)",
+                        gap: "8px",
                         alignItems: "stretch",
+                        width: "100%",
+                        maxWidth: "100%",
+                        overflow: "hidden",
                       }}
                     >
                       <PaymentColumn
@@ -1280,7 +1318,7 @@ export default async function Home({
                         style={{
                           background: "#d1d5db",
                           width: "1px",
-                          minHeight: "220px",
+                          minHeight: "180px",
                         }}
                       />
 
@@ -1331,8 +1369,16 @@ export default async function Home({
                 {isAdmin && !fixture.played && (
                   <form action={submitScore} style={{ marginTop: "10px" }}>
                     <input type="hidden" name="fixture_id" value={fixture.id} />
-                    <input type="hidden" name="division_id" value={selectedDivisionId} />
-                    <input type="hidden" name="league_type" value={selectedLeague} />
+                    <input
+                      type="hidden"
+                      name="division_id"
+                      value={selectedDivisionId}
+                    />
+                    <input
+                      type="hidden"
+                      name="league_type"
+                      value={selectedLeague}
+                    />
 
                     {[1, 2].map((set) => (
                       <div key={set} style={{ marginBottom: "8px" }}>
@@ -1431,8 +1477,16 @@ export default async function Home({
                 {isAdmin && fixture.played && (
                   <form action={resetScore} style={{ marginTop: "10px" }}>
                     <input type="hidden" name="fixture_id" value={fixture.id} />
-                    <input type="hidden" name="division_id" value={selectedDivisionId} />
-                    <input type="hidden" name="league_type" value={selectedLeague} />
+                    <input
+                      type="hidden"
+                      name="division_id"
+                      value={selectedDivisionId}
+                    />
+                    <input
+                      type="hidden"
+                      name="league_type"
+                      value={selectedLeague}
+                    />
 
                     <button
                       type="submit"
@@ -1493,9 +1547,12 @@ function PaymentColumn({
     <div
       style={{
         display: "grid",
-        gridTemplateColumns: "1fr 1fr",
-        gap: "18px",
+        gridTemplateColumns: "minmax(0,1fr) minmax(0,1fr)",
+        gap: "6px",
         textAlign: "center",
+        width: "100%",
+        minWidth: 0,
+        overflow: "hidden",
       }}
     >
       {payments.map((payment: any) => {
@@ -1505,19 +1562,26 @@ function PaymentColumn({
         const isPaid = remaining <= 0;
 
         return (
-          <div key={payment.id}>
+          <div
+            key={payment.id}
+            style={{
+              minWidth: 0,
+              maxWidth: "100%",
+              overflow: "hidden",
+            }}
+          >
             <div
               style={{
-                width: "86px",
-                height: "86px",
+                width: "52px",
+                height: "52px",
                 borderRadius: "50%",
                 background: "#12202f",
                 color: "#ffffff",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                margin: "0 auto 10px",
-                fontSize: "30px",
+                margin: "0 auto 8px",
+                fontSize: "18px",
                 fontWeight: "500",
               }}
             >
@@ -1526,12 +1590,14 @@ function PaymentColumn({
 
             <div
               style={{
-                fontSize: "22px",
-                fontWeight: "500",
+                fontSize: "13px",
+                fontWeight: "600",
                 color: "#12202f",
                 whiteSpace: "nowrap",
                 overflow: "hidden",
                 textOverflow: "ellipsis",
+                minWidth: 0,
+                maxWidth: "100%",
               }}
             >
               {payment.player_name}
@@ -1542,11 +1608,11 @@ function PaymentColumn({
                 style={{
                   display: "inline-block",
                   background: "#caff3d",
-                  padding: "4px 12px",
+                  padding: "3px 8px",
                   borderRadius: "999px",
-                  marginTop: "8px",
+                  marginTop: "6px",
                   fontWeight: "bold",
-                  fontSize: "18px",
+                  fontSize: "13px",
                   color: "#12202f",
                 }}
               >
@@ -1557,8 +1623,8 @@ function PaymentColumn({
             {fixture.is_private_game ? (
               <div
                 style={{
-                  marginTop: "12px",
-                  fontSize: "16px",
+                  marginTop: "10px",
+                  fontSize: "12px",
                   fontWeight: "bold",
                   color: "#166534",
                 }}
@@ -1569,8 +1635,8 @@ function PaymentColumn({
               <>
                 <div
                   style={{
-                    marginTop: "12px",
-                    fontSize: "20px",
+                    marginTop: "10px",
+                    fontSize: "13px",
                     fontWeight: "bold",
                     color: isPaid ? "#12202f" : "#cc0000",
                   }}
@@ -1581,8 +1647,8 @@ function PaymentColumn({
                 {isPaid ? (
                   <div
                     style={{
-                      fontSize: "34px",
-                      marginTop: "8px",
+                      fontSize: "24px",
+                      marginTop: "6px",
                     }}
                   >
                     🪙
@@ -1595,14 +1661,17 @@ function PaymentColumn({
                     <button
                       type="submit"
                       style={{
-                        marginTop: "10px",
+                        marginTop: "8px",
                         background: primary,
                         color: textColor,
                         border: "none",
-                        padding: "8px 12px",
+                        padding: "8px 8px",
                         borderRadius: "8px",
                         fontWeight: "bold",
                         cursor: "pointer",
+                        fontSize: "13px",
+                        width: "100%",
+                        maxWidth: "90px",
                       }}
                     >
                       Pay £{remaining}
@@ -1619,10 +1688,10 @@ function PaymentColumn({
         style={{
           gridColumn: "1 / -1",
           textAlign: align,
-          fontSize: "34px",
+          fontSize: "22px",
           fontWeight: "bold",
           color: "#6b7280",
-          marginTop: "14px",
+          marginTop: "10px",
         }}
       >
         {side}
