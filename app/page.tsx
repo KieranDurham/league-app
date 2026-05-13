@@ -4,6 +4,26 @@ import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
+async function togglePrivateGame(formData: FormData) {
+  "use server";
+
+  const fixtureId = Number(formData.get("fixture_id"));
+  const divisionId = Number(formData.get("division_id"));
+  const currentValue = formData.get("current_value") === "true";
+
+  await supabase
+    .from("fixtures")
+    .update({
+      is_private_game: !currentValue,
+    })
+    .eq("id", fixtureId);
+
+  revalidatePath("/");
+  revalidatePath("/summary");
+
+  redirect(`/?division=${divisionId}&admin=true`);
+}
+
 async function submitScore(formData: FormData) {
   "use server";
 
@@ -56,17 +76,21 @@ async function submitScore(formData: FormData) {
   revalidatePath("/summary");
   revalidatePath(`/team/${fixtureId}`);
 
-  redirect(`/?division=${divisionId}`);
+  redirect(`/?division=${divisionId}&admin=true`);
 }
 
 export default async function Home({
   searchParams,
 }: {
-  searchParams?: Promise<{ division?: string }>;
+  searchParams?: Promise<{
+    division?: string;
+    admin?: string;
+  }>;
 }) {
   const params = await searchParams;
 
   const selectedDivisionId = Number(params?.division || 1);
+  const isAdmin = params?.admin === "true";
 
   const { data: divisions } = await supabase
     .from("divisions")
@@ -322,6 +346,23 @@ export default async function Home({
         {currentDivision.name}
       </h1>
 
+      {isAdmin && (
+        <div
+          style={{
+            background: "#fff7ed",
+            color: "#9a3412",
+            border: "1px solid #fdba74",
+            padding: "10px",
+            borderRadius: "10px",
+            marginBottom: "12px",
+            textAlign: "center",
+            fontWeight: "bold",
+          }}
+        >
+          Admin View Active
+        </div>
+      )}
+
       <div
         style={{
           display: "flex",
@@ -334,7 +375,7 @@ export default async function Home({
         {divisions?.map((division: any) => (
           <a
             key={division.id}
-            href={`/?division=${division.id}`}
+            href={`/?division=${division.id}${isAdmin ? "&admin=true" : ""}`}
             style={{
               padding: "10px 14px",
               borderRadius: "999px",
@@ -615,6 +656,65 @@ export default async function Home({
                   </strong>
                 </div>
 
+                {isAdmin && (
+                  <form
+                    action={togglePrivateGame}
+                    style={{ marginBottom: "10px" }}
+                  >
+                    <input type="hidden" name="fixture_id" value={fixture.id} />
+
+                    <input
+                      type="hidden"
+                      name="division_id"
+                      value={selectedDivisionId}
+                    />
+
+                    <input
+                      type="hidden"
+                      name="current_value"
+                      value={fixture.is_private_game ? "true" : "false"}
+                    />
+
+                    <button
+                      type="submit"
+                      style={{
+                        width: "100%",
+                        background: fixture.is_private_game
+                          ? "#b91c1c"
+                          : primary,
+                        color: "#ffffff",
+                        border: "none",
+                        padding: "10px",
+                        borderRadius: "8px",
+                        fontWeight: "bold",
+                        fontSize: "15px",
+                        cursor: "pointer",
+                      }}
+                    >
+                      {fixture.is_private_game
+                        ? "Remove Private Game"
+                        : "Mark as Private Game"}
+                    </button>
+                  </form>
+                )}
+
+                {fixture.is_private_game && (
+                  <div
+                    style={{
+                      background: "#dcfce7",
+                      color: "#166534",
+                      border: "1px solid #86efac",
+                      padding: "10px",
+                      borderRadius: "10px",
+                      marginBottom: "12px",
+                      textAlign: "center",
+                      fontWeight: "bold",
+                    }}
+                  >
+                    Private game - no payment required
+                  </div>
+                )}
+
                 <div
                   style={{
                     border: "1px solid #e5e7eb",
@@ -681,74 +781,91 @@ export default async function Home({
                                 {payment.player_name}
                               </div>
 
-                              <div
-                                style={{
-                                  display: "inline-block",
-                                  background: "#caff3d",
-                                  padding: "4px 12px",
-                                  borderRadius: "999px",
-                                  marginTop: "8px",
-                                  fontWeight: "bold",
-                                  fontSize: "18px",
-                                  color: "#12202f",
-                                }}
-                              >
-                                £{amountDue}
-                              </div>
-
-                              <div
-                                style={{
-                                  marginTop: "12px",
-                                  fontSize: "20px",
-                                  fontWeight: "bold",
-                                  color: isPaid ? "#12202f" : "#cc0000",
-                                }}
-                              >
-                                {isPaid ? "Paid" : "Not paid"}
-                              </div>
-
-                              {isPaid ? (
+                              {!fixture.is_private_game && (
                                 <div
                                   style={{
-                                    fontSize: "34px",
+                                    display: "inline-block",
+                                    background: "#caff3d",
+                                    padding: "4px 12px",
+                                    borderRadius: "999px",
                                     marginTop: "8px",
+                                    fontWeight: "bold",
+                                    fontSize: "18px",
+                                    color: "#12202f",
                                   }}
                                 >
-                                  🪙
+                                  £{amountDue}
+                                </div>
+                              )}
+
+                              {fixture.is_private_game ? (
+                                <div
+                                  style={{
+                                    marginTop: "12px",
+                                    fontSize: "16px",
+                                    fontWeight: "bold",
+                                    color: "#166534",
+                                  }}
+                                >
+                                  No payment required
                                 </div>
                               ) : (
-                                <form
-                                  action="/api/create-checkout-session"
-                                  method="POST"
-                                >
-                                  <input
-                                    type="hidden"
-                                    name="payment_id"
-                                    value={payment.id}
-                                  />
-
-                                  <input
-                                    type="hidden"
-                                    name="amount"
-                                    value={remaining}
-                                  />
-
-                                  <button
-                                    type="submit"
+                                <>
+                                  <div
                                     style={{
-                                      marginTop: "10px",
-                                      background: primary,
-                                      color: textColor,
-                                      border: "none",
-                                      padding: "8px 12px",
-                                      borderRadius: "8px",
+                                      marginTop: "12px",
+                                      fontSize: "20px",
                                       fontWeight: "bold",
-                                      cursor: "pointer",
+                                      color: isPaid ? "#12202f" : "#cc0000",
                                     }}
                                   >
-                                    Pay £{remaining}
-                                  </button>
-                                </form>
+                                    {isPaid ? "Paid" : "Not paid"}
+                                  </div>
+
+                                  {isPaid ? (
+                                    <div
+                                      style={{
+                                        fontSize: "34px",
+                                        marginTop: "8px",
+                                      }}
+                                    >
+                                      🪙
+                                    </div>
+                                  ) : (
+                                    <form
+                                      action="/api/create-checkout-session"
+                                      method="POST"
+                                    >
+                                      <input
+                                        type="hidden"
+                                        name="payment_id"
+                                        value={payment.id}
+                                      />
+
+                                      <input
+                                        type="hidden"
+                                        name="amount"
+                                        value={remaining}
+                                      />
+
+                                      <button
+                                        type="submit"
+                                        style={{
+                                          marginTop: "10px",
+                                          background: primary,
+                                          color: textColor,
+                                          border: "none",
+                                          padding: "8px 12px",
+                                          borderRadius: "8px",
+                                          fontWeight: "bold",
+                                          cursor: "pointer",
+                                        }}
+                                      >
+                                        Pay £{remaining}
+                                      </button>
+                                    </form>
+                                  )}
+                                </>
                               )}
                             </div>
                           );
@@ -823,74 +940,91 @@ export default async function Home({
                                 {payment.player_name}
                               </div>
 
-                              <div
-                                style={{
-                                  display: "inline-block",
-                                  background: "#caff3d",
-                                  padding: "4px 12px",
-                                  borderRadius: "999px",
-                                  marginTop: "8px",
-                                  fontWeight: "bold",
-                                  fontSize: "18px",
-                                  color: "#12202f",
-                                }}
-                              >
-                                £{amountDue}
-                              </div>
-
-                              <div
-                                style={{
-                                  marginTop: "12px",
-                                  fontSize: "20px",
-                                  fontWeight: "bold",
-                                  color: isPaid ? "#12202f" : "#cc0000",
-                                }}
-                              >
-                                {isPaid ? "Paid" : "Not paid"}
-                              </div>
-
-                              {isPaid ? (
+                              {!fixture.is_private_game && (
                                 <div
                                   style={{
-                                    fontSize: "34px",
+                                    display: "inline-block",
+                                    background: "#caff3d",
+                                    padding: "4px 12px",
+                                    borderRadius: "999px",
                                     marginTop: "8px",
+                                    fontWeight: "bold",
+                                    fontSize: "18px",
+                                    color: "#12202f",
                                   }}
                                 >
-                                  🪙
+                                  £{amountDue}
+                                </div>
+                              )}
+
+                              {fixture.is_private_game ? (
+                                <div
+                                  style={{
+                                    marginTop: "12px",
+                                    fontSize: "16px",
+                                    fontWeight: "bold",
+                                    color: "#166534",
+                                  }}
+                                >
+                                  No payment required
                                 </div>
                               ) : (
-                                <form
-                                  action="/api/create-checkout-session"
-                                  method="POST"
-                                >
-                                  <input
-                                    type="hidden"
-                                    name="payment_id"
-                                    value={payment.id}
-                                  />
-
-                                  <input
-                                    type="hidden"
-                                    name="amount"
-                                    value={remaining}
-                                  />
-
-                                  <button
-                                    type="submit"
+                                <>
+                                  <div
                                     style={{
-                                      marginTop: "10px",
-                                      background: primary,
-                                      color: textColor,
-                                      border: "none",
-                                      padding: "8px 12px",
-                                      borderRadius: "8px",
+                                      marginTop: "12px",
+                                      fontSize: "20px",
                                       fontWeight: "bold",
-                                      cursor: "pointer",
+                                      color: isPaid ? "#12202f" : "#cc0000",
                                     }}
                                   >
-                                    Pay £{remaining}
-                                  </button>
-                                </form>
+                                    {isPaid ? "Paid" : "Not paid"}
+                                  </div>
+
+                                  {isPaid ? (
+                                    <div
+                                      style={{
+                                        fontSize: "34px",
+                                        marginTop: "8px",
+                                      }}
+                                    >
+                                      🪙
+                                    </div>
+                                  ) : (
+                                    <form
+                                      action="/api/create-checkout-session"
+                                      method="POST"
+                                    >
+                                      <input
+                                        type="hidden"
+                                        name="payment_id"
+                                        value={payment.id}
+                                      />
+
+                                      <input
+                                        type="hidden"
+                                        name="amount"
+                                        value={remaining}
+                                      />
+
+                                      <button
+                                        type="submit"
+                                        style={{
+                                          marginTop: "10px",
+                                          background: primary,
+                                          color: textColor,
+                                          border: "none",
+                                          padding: "8px 12px",
+                                          borderRadius: "8px",
+                                          fontWeight: "bold",
+                                          cursor: "pointer",
+                                        }}
+                                      >
+                                        Pay £{remaining}
+                                      </button>
+                                    </form>
+                                  )}
+                                </>
                               )}
                             </div>
                           );
@@ -944,7 +1078,7 @@ export default async function Home({
                   </div>
                 )}
 
-                {!fixture.played && (
+                {isAdmin && !fixture.played && (
                   <form action={submitScore} style={{ marginTop: "10px" }}>
                     <input type="hidden" name="fixture_id" value={fixture.id} />
 
