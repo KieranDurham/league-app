@@ -34,13 +34,17 @@ export default async function SummaryPage({
   ).sort((a: any, b: any) => a - b);
 
   const getTeamName = (id: number) => {
-    return teams?.find((t: any) => t.id === id)?.name || "Unknown";
+    return teams?.find((t: any) => Number(t.id) === Number(id))?.name || "Unknown";
   };
 
   return (
     <main className={isScreenshot ? "summary-page screenshot" : "summary-page"}>
       <style>{`
         .summary-page {
+          width: 100%;
+          max-width: 100%;
+          overflow-x: hidden;
+          box-sizing: border-box;
           padding: 14px;
           background: #e9e9e9;
           min-height: 100vh;
@@ -48,7 +52,12 @@ export default async function SummaryPage({
           color: #000;
         }
 
+        .summary-page * {
+          box-sizing: border-box;
+        }
+
         .top-bar {
+          width: 100%;
           max-width: 1080px;
           margin: 0 auto 12px auto;
           display: flex;
@@ -57,13 +66,23 @@ export default async function SummaryPage({
           gap: 10px;
         }
 
+        .round-scroll {
+          display: flex;
+          gap: 8px;
+          overflow-x: auto;
+          max-width: 100%;
+          padding-bottom: 4px;
+        }
+
         .main-card {
+          width: 100%;
           max-width: 1080px;
           margin: 0 auto;
           background: #ffffff;
           border-radius: 22px;
           padding: 14px;
           border: 4px solid #000;
+          overflow: hidden;
         }
 
         .summary-title {
@@ -78,28 +97,31 @@ export default async function SummaryPage({
         .summary-title h1 {
           margin: 0;
           font-size: 30px;
+          line-height: 1.1;
         }
 
         .summary-title p {
-          margin: 0;
+          margin: 4px 0 0;
           opacity: 0.8;
           font-size: 13px;
         }
 
         .summary-grid {
+          width: 100%;
           display: grid;
-          grid-template-columns: repeat(3, 1fr);
+          grid-template-columns: repeat(3, minmax(0, 1fr));
           gap: 16px;
         }
 
         .division-card {
+          min-width: 0;
           border-radius: 18px;
           overflow: hidden;
           background: #fff;
         }
 
         .division-header {
-          height: 132px;
+          height: 118px;
           padding: 10px;
           display: flex;
           flex-direction: column;
@@ -109,47 +131,56 @@ export default async function SummaryPage({
         }
 
         .division-logo {
-          width: 58px;
-          height: 58px;
+          width: 52px;
+          height: 52px;
           object-fit: contain;
+          display: block;
         }
 
         .division-header h2 {
           margin: 0;
-          font-size: 22px;
+          font-size: 20px;
           font-weight: 900;
           text-transform: uppercase;
           text-align: center;
+          line-height: 1.05;
+          overflow-wrap: break-word;
         }
 
         .fixture-body {
-          padding: 10px 12px;
+          padding: 8px 10px;
         }
 
         .fixture-item {
           border-bottom: 1px solid #ddd;
           padding: 7px 0;
-          min-height: 78px;
+          min-height: 70px;
           display: flex;
           flex-direction: column;
           justify-content: center;
         }
 
+        .fixture-item:last-child {
+          border-bottom: none;
+        }
+
         .fixture-row {
           display: grid;
-          grid-template-columns: minmax(0, 1fr) 58px minmax(0, 1fr);
+          grid-template-columns: minmax(0, 1fr) 52px minmax(0, 1fr);
           align-items: center;
-          gap: 8px;
+          gap: 6px;
           font-weight: 900;
           color: #000;
+          min-width: 0;
         }
 
         .team-name {
+          min-width: 0;
           color: #000;
-          font-size: 14px;
-          line-height: 1.1;
-          word-break: normal;
+          font-size: 13px;
+          line-height: 1.15;
           overflow-wrap: break-word;
+          word-break: break-word;
         }
 
         .team-name.right {
@@ -163,23 +194,24 @@ export default async function SummaryPage({
 
         .score-pill {
           background: #eeeeee;
-          padding: 7px 8px;
+          padding: 6px 6px;
           border-radius: 999px;
           color: #000;
           font-weight: 900;
           text-align: center;
-          font-size: 15px;
+          font-size: 13px;
           white-space: nowrap;
-          min-width: 58px;
-          box-sizing: border-box;
+          min-width: 52px;
         }
 
         .sets {
           text-align: center;
-          font-size: 11px;
-          margin-top: 6px;
+          font-size: 10px;
+          margin-top: 5px;
           color: #333;
           white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
         }
 
         .empty-message {
@@ -187,11 +219,12 @@ export default async function SummaryPage({
           font-weight: bold;
           color: #333;
           padding: 16px 0;
+          font-size: 13px;
         }
 
         @media (max-width: 900px) {
           .summary-grid {
-            grid-template-columns: repeat(2, 1fr);
+            grid-template-columns: repeat(2, minmax(0, 1fr));
           }
         }
 
@@ -207,7 +240,12 @@ export default async function SummaryPage({
 
           .main-card {
             padding: 10px;
-            border-radius: 20px;
+            border-radius: 18px;
+            border-width: 3px;
+          }
+
+          .summary-title h1 {
+            font-size: 24px;
           }
 
           .summary-grid {
@@ -216,20 +254,30 @@ export default async function SummaryPage({
           }
 
           .division-header {
-            height: 140px;
+            height: 120px;
           }
 
           .division-logo {
-            width: 70px;
-            height: 70px;
+            width: 58px;
+            height: 58px;
           }
 
           .division-header h2 {
-            font-size: 26px;
+            font-size: 22px;
+          }
+
+          .fixture-row {
+            grid-template-columns: minmax(0, 1fr) 50px minmax(0, 1fr);
+            gap: 5px;
           }
 
           .team-name {
-            font-size: 15px;
+            font-size: 13px;
+          }
+
+          .score-pill {
+            min-width: 50px;
+            font-size: 13px;
           }
         }
 
@@ -254,56 +302,56 @@ export default async function SummaryPage({
         }
 
         .screenshot .summary-grid {
-          grid-template-columns: repeat(3, 1fr);
-          gap: 16px;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: 12px;
         }
 
         .screenshot .division-card {
-          border-radius: 16px;
+          border-radius: 14px;
         }
 
         .screenshot .division-header {
-          height: 132px;
+          height: 112px;
           padding: 8px;
         }
 
         .screenshot .division-logo {
-          width: 54px;
-          height: 54px;
+          width: 50px;
+          height: 50px;
         }
 
         .screenshot .division-header h2 {
-          font-size: 22px;
+          font-size: 19px;
         }
 
         .screenshot .fixture-body {
-          padding: 8px 12px;
+          padding: 7px 9px;
         }
 
         .screenshot .fixture-item {
-          padding: 6px 0;
-          min-height: 78px;
+          padding: 5px 0;
+          min-height: 66px;
         }
 
         .screenshot .fixture-row {
-          grid-template-columns: minmax(0, 1fr) 58px minmax(0, 1fr);
-          gap: 7px;
+          grid-template-columns: minmax(0, 1fr) 50px minmax(0, 1fr);
+          gap: 5px;
         }
 
         .screenshot .team-name {
-          font-size: 14px;
+          font-size: 12.5px;
           line-height: 1.1;
         }
 
         .screenshot .score-pill {
-          font-size: 15px;
-          padding: 7px 7px;
-          min-width: 58px;
+          font-size: 12.5px;
+          padding: 6px 5px;
+          min-width: 50px;
         }
 
         .screenshot .sets {
-          font-size: 11px;
-          margin-top: 5px;
+          font-size: 9.5px;
+          margin-top: 4px;
         }
       `}</style>
 
@@ -323,7 +371,7 @@ export default async function SummaryPage({
           ← Back
         </a>
 
-        <div style={{ display: "flex", gap: "8px", overflowX: "auto" }}>
+        <div className="round-scroll">
           {availableRounds.map((round: any) => (
             <a
               key={round}
@@ -355,6 +403,7 @@ export default async function SummaryPage({
             textDecoration: "none",
             fontWeight: "bold",
             whiteSpace: "nowrap",
+            textAlign: "center",
           }}
         >
           Screenshot
@@ -370,7 +419,7 @@ export default async function SummaryPage({
         <div className="summary-grid">
           {(divisions || []).map((division: any) => {
             const divisionFixtures = (fixtures || []).filter(
-              (f: any) => f.division_id === division.id
+              (f: any) => Number(f.division_id) === Number(division.id)
             );
 
             return (
@@ -404,37 +453,49 @@ export default async function SummaryPage({
                     <p className="empty-message">No fixtures for this round</p>
                   )}
 
-                  {divisionFixtures.map((fixture: any) => (
-                    <div key={fixture.id} className="fixture-item">
-                      <div className="fixture-row">
-                        <div className="team-name">
-                          <a href={`/team/${fixture.home_team_id}`}>
-                            {getTeamName(fixture.home_team_id)}
-                          </a>
+                  {divisionFixtures.map((fixture: any) => {
+                    const showThirdSet =
+                      fixture.played &&
+                      fixture.home_set3 !== null &&
+                      fixture.away_set3 !== null;
+
+                    return (
+                      <div key={fixture.id} className="fixture-item">
+                        <div className="fixture-row">
+                          <div className="team-name">
+                            <a href={`/team/${fixture.home_team_id}`}>
+                              {getTeamName(fixture.home_team_id)}
+                            </a>
+                          </div>
+
+                          <div className="score-pill">
+                            {fixture.played
+                              ? `${fixture.home_score} - ${fixture.away_score}`
+                              : "vs"}
+                          </div>
+
+                          <div className="team-name right">
+                            <a href={`/team/${fixture.away_team_id}`}>
+                              {getTeamName(fixture.away_team_id)}
+                            </a>
+                          </div>
                         </div>
 
-                        <div className="score-pill">
-                          {fixture.played
-                            ? `${fixture.home_score} - ${fixture.away_score}`
-                            : "vs"}
-                        </div>
-
-                        <div className="team-name right">
-                          <a href={`/team/${fixture.away_team_id}`}>
-                            {getTeamName(fixture.away_team_id)}
-                          </a>
-                        </div>
+                        {fixture.played && (
+                          <div className="sets">
+                            Sets: {fixture.home_set1}-{fixture.away_set1} |{" "}
+                            {fixture.home_set2}-{fixture.away_set2}
+                            {showThirdSet && (
+                              <>
+                                {" "}
+                                | {fixture.home_set3}-{fixture.away_set3}
+                              </>
+                            )}
+                          </div>
+                        )}
                       </div>
-
-                      {fixture.played && (
-                        <div className="sets">
-                          Sets: {fixture.home_set1}-{fixture.away_set1} |{" "}
-                          {fixture.home_set2}-{fixture.away_set2} |{" "}
-                          {fixture.home_set3}-{fixture.away_set3}
-                        </div>
-                      )}
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             );

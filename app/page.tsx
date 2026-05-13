@@ -2,16 +2,27 @@ export default function HomePage() {
   return (
     <main className="page">
       <style>{`
+        html,
+        body {
+          width: 100%;
+          max-width: 100%;
+          overflow-x: hidden;
+          margin: 0;
+          padding: 0;
+        }
+
         * {
           box-sizing: border-box;
         }
 
         body {
-          margin: 0;
           background: #020617;
         }
 
         .page {
+          width: 100%;
+          max-width: 100%;
+          overflow-x: hidden;
           min-height: 100vh;
           background:
             radial-gradient(circle at top left, rgba(34,197,94,0.22), transparent 30%),
@@ -23,8 +34,10 @@ export default function HomePage() {
         }
 
         .container {
+          width: 100%;
           max-width: 980px;
           margin: 0 auto;
+          overflow: hidden;
         }
 
         .hero {
@@ -36,21 +49,22 @@ export default function HomePage() {
         }
 
         .main-logo {
-          width: 120px;
+          width: 110px;
+          max-width: 100%;
+          height: auto;
           object-fit: contain;
           margin-bottom: 10px;
-          filter:
-            drop-shadow(0 0 18px rgba(74,222,128,0.38))
-            drop-shadow(0 0 50px rgba(74,222,128,0.14));
         }
 
         .title {
-          font-size: clamp(34px, 7vw, 64px);
+          max-width: 100%;
+          font-size: clamp(30px, 9vw, 64px);
           font-weight: 900;
-          line-height: 0.92;
-          letter-spacing: -1.6px;
+          line-height: 0.95;
+          letter-spacing: -1.2px;
           margin: 0 0 10px;
           text-shadow: 0 2px 12px rgba(0,0,0,0.7);
+          overflow-wrap: break-word;
         }
 
         .subtitle {
@@ -69,6 +83,7 @@ export default function HomePage() {
           font-size: 14px;
           font-weight: 700;
           margin-bottom: 24px;
+          line-height: 1.5;
         }
 
         .stats span {
@@ -93,6 +108,8 @@ export default function HomePage() {
 
         .padelup {
           width: 95px;
+          max-width: 100%;
+          height: auto;
           object-fit: contain;
           margin-bottom: 6px;
           opacity: 0.96;
@@ -104,12 +121,14 @@ export default function HomePage() {
         }
 
         .cards {
+          width: 100%;
           display: grid;
-          grid-template-columns: repeat(2, 1fr);
+          grid-template-columns: repeat(2, minmax(0, 1fr));
           gap: 16px;
         }
 
         .card {
+          min-width: 0;
           position: relative;
           overflow: hidden;
           border-radius: 26px;
@@ -118,16 +137,6 @@ export default function HomePage() {
           color: #ffffff;
           border: 1px solid rgba(74,222,128,0.42);
           box-shadow: 0 18px 60px rgba(0,0,0,0.52);
-          transition:
-            transform 0.25s ease,
-            box-shadow 0.25s ease,
-            border 0.25s ease;
-        }
-
-        .card:hover {
-          transform: translateY(-5px);
-          border-color: rgba(74,222,128,0.85);
-          box-shadow: 0 25px 80px rgba(34,197,94,0.2);
         }
 
         .card img {
@@ -174,10 +183,12 @@ export default function HomePage() {
           display: flex;
           flex-direction: column;
           justify-content: flex-end;
+          min-width: 0;
         }
 
         .badge {
           width: fit-content;
+          max-width: 100%;
           padding: 8px 16px;
           border-radius: 999px;
           background: rgba(74,222,128,0.12);
@@ -186,7 +197,6 @@ export default function HomePage() {
           font-size: 11px;
           font-weight: 900;
           margin-bottom: 16px;
-          backdrop-filter: blur(10px);
         }
 
         .purple {
@@ -196,11 +206,12 @@ export default function HomePage() {
         }
 
         .card-title {
-          font-size: clamp(28px, 4vw, 42px);
-          line-height: 0.95;
+          font-size: clamp(26px, 4vw, 42px);
+          line-height: 0.98;
           font-weight: 900;
           margin: 0 0 12px;
           text-shadow: 0 4px 20px rgba(0,0,0,0.92);
+          overflow-wrap: break-word;
         }
 
         .accent-green {
@@ -217,40 +228,50 @@ export default function HomePage() {
           line-height: 1.5;
           margin: 0 0 20px;
           max-width: 380px;
-          text-shadow: 0 2px 8px rgba(0,0,0,0.85);
         }
 
         .button {
           width: fit-content;
+          max-width: 100%;
           padding: 14px 24px;
           border-radius: 999px;
           background: #4ade80;
           color: #02140a;
           font-weight: 900;
           font-size: 15px;
-          box-shadow: 0 10px 35px rgba(74,222,128,0.35);
         }
 
         .button-purple {
           background: #c084fc;
           color: #190524;
-          box-shadow: 0 10px 35px rgba(192,132,252,0.35);
         }
 
         @media (max-width: 640px) {
+          .page {
+            padding: 12px;
+          }
+
           .cards {
             grid-template-columns: 1fr;
             gap: 16px;
           }
 
           .card {
-            min-height: 240px;
-            border-radius: 24px;
+            min-height: 235px;
+            border-radius: 22px;
           }
 
           .content {
-            min-height: 240px;
-            padding: 22px;
+            min-height: 235px;
+            padding: 20px;
+          }
+
+          .title {
+            font-size: 34px;
+          }
+
+          .stats {
+            font-size: 13px;
           }
 
           .card-title {
