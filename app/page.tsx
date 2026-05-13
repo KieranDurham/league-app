@@ -48,6 +48,44 @@ async function addFixture(formData: FormData) {
   redirect(`/?division=${divisionId}&admin=true#fixtures`);
 }
 
+async function updateFixture(formData: FormData) {
+  "use server";
+
+  const fixtureId = Number(formData.get("fixture_id"));
+  const divisionId = Number(formData.get("division_id"));
+  const round = Number(formData.get("round"));
+  const homeTeamId = Number(formData.get("home_team_id"));
+  const awayTeamId = Number(formData.get("away_team_id"));
+  const fixtureDay = String(formData.get("fixture_day") || "").trim();
+  const fixtureTime = String(formData.get("fixture_time") || "").trim();
+  const isPrivateGame = formData.get("is_private_game") === "on";
+
+  if (!fixtureId || !divisionId || !round || !homeTeamId || !awayTeamId) {
+    redirect(`/?division=${divisionId}&admin=true`);
+  }
+
+  if (homeTeamId === awayTeamId) {
+    redirect(`/?division=${divisionId}&admin=true`);
+  }
+
+  await supabase
+    .from("fixtures")
+    .update({
+      round,
+      home_team_id: homeTeamId,
+      away_team_id: awayTeamId,
+      fixture_day: fixtureDay,
+      fixture_time: fixtureTime,
+      is_private_game: isPrivateGame,
+    })
+    .eq("id", fixtureId);
+
+  revalidatePath("/");
+  revalidatePath("/summary");
+
+  redirect(`/?division=${divisionId}&admin=true#round-${round}`);
+}
+
 async function togglePrivateGame(formData: FormData) {
   "use server";
 
@@ -119,6 +157,33 @@ async function submitScore(formData: FormData) {
   revalidatePath("/");
   revalidatePath("/summary");
   revalidatePath(`/team/${fixtureId}`);
+
+  redirect(`/?division=${divisionId}&admin=true`);
+}
+
+async function resetScore(formData: FormData) {
+  "use server";
+
+  const fixtureId = Number(formData.get("fixture_id"));
+  const divisionId = Number(formData.get("division_id"));
+
+  await supabase
+    .from("fixtures")
+    .update({
+      home_set1: null,
+      away_set1: null,
+      home_set2: null,
+      away_set2: null,
+      home_set3: null,
+      away_set3: null,
+      home_score: 0,
+      away_score: 0,
+      played: false,
+    })
+    .eq("id", fixtureId);
+
+  revalidatePath("/");
+  revalidatePath("/summary");
 
   redirect(`/?division=${divisionId}&admin=true`);
 }
@@ -531,8 +596,7 @@ export default async function Home({
           background: "#ffffff",
           marginBottom: "26px",
         }}
-      >
-        <table
+      >        <table
           style={{
             width: "100%",
             borderCollapse: "collapse",
@@ -914,6 +978,194 @@ export default async function Home({
                     </a>
                   </strong>
                 </div>
+
+                {isAdmin && (
+                  <div
+                    style={{
+                      border: "1px solid #d1d5db",
+                      borderRadius: "10px",
+                      padding: "12px",
+                      marginBottom: "12px",
+                      background: "#f9fafb",
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontWeight: "bold",
+                        marginBottom: "10px",
+                        color: "#111827",
+                      }}
+                    >
+                      Edit Fixture
+                    </div>
+
+                    <form action={updateFixture}>
+                      <input
+                        type="hidden"
+                        name="fixture_id"
+                        value={fixture.id}
+                      />
+
+                      <input
+                        type="hidden"
+                        name="division_id"
+                        value={selectedDivisionId}
+                      />
+
+                      <div
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns: "1fr 1fr",
+                          gap: "10px",
+                          marginBottom: "10px",
+                        }}
+                      >
+                        <div>
+                          <div
+                            style={{
+                              fontSize: "13px",
+                              fontWeight: "bold",
+                              marginBottom: "4px",
+                            }}
+                          >
+                            Round
+                          </div>
+
+                          <input
+                            name="round"
+                            type="number"
+                            defaultValue={fixture.round}
+                            required
+                            style={inputStyle}
+                          />
+                        </div>
+
+                        <div>
+                          <div
+                            style={{
+                              fontSize: "13px",
+                              fontWeight: "bold",
+                              marginBottom: "4px",
+                            }}
+                          >
+                            Time
+                          </div>
+
+                          <input
+                            name="fixture_time"
+                            type="text"
+                            defaultValue={fixture.fixture_time || ""}
+                            style={inputStyle}
+                          />
+                        </div>
+                      </div>
+
+                      <div style={{ marginBottom: "10px" }}>
+                        <div
+                          style={{
+                            fontSize: "13px",
+                            fontWeight: "bold",
+                            marginBottom: "4px",
+                          }}
+                        >
+                          Day
+                        </div>
+
+                        <input
+                          name="fixture_day"
+                          type="text"
+                          defaultValue={fixture.fixture_day || ""}
+                          style={inputStyle}
+                        />
+                      </div>
+
+                      <div style={{ marginBottom: "10px" }}>
+                        <div
+                          style={{
+                            fontSize: "13px",
+                            fontWeight: "bold",
+                            marginBottom: "4px",
+                          }}
+                        >
+                          Home Team
+                        </div>
+
+                        <select
+                          name="home_team_id"
+                          defaultValue={fixture.home_team_id}
+                          required
+                          style={selectStyle}
+                        >
+                          {teams?.map((team: any) => (
+                            <option key={team.id} value={team.id}>
+                              {team.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div style={{ marginBottom: "10px" }}>
+                        <div
+                          style={{
+                            fontSize: "13px",
+                            fontWeight: "bold",
+                            marginBottom: "4px",
+                          }}
+                        >
+                          Away Team
+                        </div>
+
+                        <select
+                          name="away_team_id"
+                          defaultValue={fixture.away_team_id}
+                          required
+                          style={selectStyle}
+                        >
+                          {teams?.map((team: any) => (
+                            <option key={team.id} value={team.id}>
+                              {team.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <label
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "8px",
+                          marginBottom: "12px",
+                          fontWeight: "bold",
+                          color: "#222222",
+                        }}
+                      >
+                        <input
+                          name="is_private_game"
+                          type="checkbox"
+                          defaultChecked={fixture.is_private_game}
+                        />
+                        Private game - no payment required
+                      </label>
+
+                      <button
+                        type="submit"
+                        style={{
+                          width: "100%",
+                          background: "#2563eb",
+                          color: "#ffffff",
+                          border: "none",
+                          padding: "10px",
+                          borderRadius: "8px",
+                          fontWeight: "bold",
+                          cursor: "pointer",
+                          fontSize: "15px",
+                        }}
+                      >
+                        Save Fixture Changes
+                      </button>
+                    </form>
+                  </div>
+                )}
 
                 {isAdmin && (
                   <form
@@ -1439,6 +1691,36 @@ export default async function Home({
                   >
                     Result submitted
                   </div>
+                )}
+
+                {isAdmin && fixture.played && (
+                  <form action={resetScore} style={{ marginTop: "10px" }}>
+                    <input type="hidden" name="fixture_id" value={fixture.id} />
+
+                    <input
+                      type="hidden"
+                      name="division_id"
+                      value={selectedDivisionId}
+                    />
+
+                    <button
+                      type="submit"
+                      style={{
+                        width: "100%",
+                        background: "#b91c1c",
+                        color: "#ffffff",
+                        padding: "12px",
+                        borderRadius: "8px",
+                        border: "none",
+                        marginTop: "6px",
+                        fontWeight: "bold",
+                        fontSize: "16px",
+                        cursor: "pointer",
+                      }}
+                    >
+                      Reset Result
+                    </button>
+                  </form>
                 )}
               </div>
             );
