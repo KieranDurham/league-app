@@ -32,19 +32,20 @@ export default function HomePage() {
           display: flex;
           flex-direction: column;
           align-items: center;
-          padding: 4px 0 10px;
+          padding: 10px 0 4px;
         }
 
         .main-logo {
-          width: 68px;
-          height: 68px;
-          object-fit: cover;
-          border-radius: 16px;
-          background: #ffffff;
-          margin-bottom: 14px;
+          width: 110px;
+          height: 110px;
+          object-fit: contain;
+          border-radius: 28px;
+          background: transparent;
+          margin-bottom: 18px;
+
           box-shadow:
-            0 0 30px rgba(74,222,128,0.12),
-            0 18px 50px rgba(0,0,0,0.42);
+            0 0 50px rgba(74,222,128,0.35),
+            0 0 100px rgba(74,222,128,0.18);
         }
 
         .title {
@@ -53,12 +54,15 @@ export default function HomePage() {
           line-height: 0.92;
           letter-spacing: -1px;
           margin: 0 0 8px;
+
+          text-shadow:
+            0 2px 12px rgba(0,0,0,0.65);
         }
 
         .subtitle {
           color: #d1d5db;
           font-size: clamp(14px, 2vw, 20px);
-          margin: 0 0 12px;
+          margin: 0 0 14px;
         }
 
         .green {
@@ -69,12 +73,12 @@ export default function HomePage() {
           text-align: center;
           color: #9ca3af;
           font-size: 13px;
-          font-weight: 600;
-          margin-bottom: 14px;
+          font-weight: 700;
+          margin-bottom: 18px;
         }
 
         .hosted {
-          margin-bottom: 10px;
+          margin-bottom: 14px;
           display: flex;
           flex-direction: column;
           align-items: center;
@@ -82,16 +86,17 @@ export default function HomePage() {
 
         .hosted-label {
           font-size: 8px;
-          letter-spacing: 2.5px;
+          letter-spacing: 3px;
           color: #9ca3af;
           font-weight: 900;
-          margin-bottom: 4px;
+          margin-bottom: 6px;
         }
 
         .padelup {
           width: 95px;
           object-fit: contain;
           margin-bottom: 6px;
+          opacity: 0.95;
         }
 
         .location {
@@ -109,23 +114,31 @@ export default function HomePage() {
         .card {
           position: relative;
           overflow: hidden;
-          border-radius: 22px;
-          min-height: 210px;
+          border-radius: 24px;
+          min-height: 220px;
           text-decoration: none;
           color: #ffffff;
+
           border: 1px solid rgba(74,222,128,0.35);
-          box-shadow: 0 18px 50px rgba(0,0,0,0.42);
+
+          box-shadow:
+            0 18px 50px rgba(0,0,0,0.42);
+
           transition:
             transform 0.25s ease,
             border 0.25s ease,
             box-shadow 0.25s ease;
+
           backdrop-filter: blur(12px);
         }
 
         .card:hover {
           transform: translateY(-4px);
+
           border-color: rgba(74,222,128,0.85);
-          box-shadow: 0 24px 70px rgba(34,197,94,0.22);
+
+          box-shadow:
+            0 24px 70px rgba(34,197,94,0.22);
         }
 
         .card img {
@@ -148,28 +161,31 @@ export default function HomePage() {
         .overlay {
           position: absolute;
           inset: 0;
+
           background:
             linear-gradient(
               90deg,
-              rgba(2,6,23,0.92) 0%,
-              rgba(2,6,23,0.62) 45%,
-              rgba(2,6,23,0.86) 100%
+              rgba(2,6,23,0.96) 0%,
+              rgba(2,6,23,0.68) 48%,
+              rgba(2,6,23,0.90) 100%
             ),
+
             linear-gradient(
               180deg,
-              rgba(2,6,23,0.05) 0%,
-              rgba(2,6,23,0.92) 100%
+              rgba(2,6,23,0.18) 0%,
+              rgba(2,6,23,0.96) 100%
             );
 
           backdrop-filter: blur(2px);
+
           z-index: 1;
         }
 
         .content {
           position: relative;
           z-index: 2;
-          min-height: 210px;
-          padding: 17px;
+          min-height: 220px;
+          padding: 18px;
           display: flex;
           flex-direction: column;
           justify-content: flex-end;
@@ -177,14 +193,21 @@ export default function HomePage() {
 
         .badge {
           width: fit-content;
-          padding: 5px 10px;
+          padding: 6px 12px;
           border-radius: 999px;
+
           background: rgba(74,222,128,0.14);
+
           border: 1px solid rgba(74,222,128,0.55);
+
           color: #86efac;
+
           font-size: 10px;
           font-weight: 900;
-          margin-bottom: 10px;
+
+          margin-bottom: 12px;
+
+          backdrop-filter: blur(8px);
         }
 
         .purple {
@@ -195,29 +218,51 @@ export default function HomePage() {
 
         .card-title {
           font-size: clamp(24px, 4vw, 34px);
-          line-height: 1;
+          line-height: 0.95;
           font-weight: 900;
           margin: 0 0 8px;
+
+          text-shadow:
+            0 2px 8px rgba(0,0,0,0.9),
+            0 0 20px rgba(0,0,0,0.6);
         }
 
         .card-text {
-          color: #e5e7eb;
+          color: #f3f4f6;
           font-size: 13px;
           line-height: 1.35;
           margin: 0 0 14px;
           max-width: 390px;
+
+          text-shadow:
+            0 2px 6px rgba(0,0,0,0.85);
         }
 
         .button {
           width: fit-content;
-          padding: 10px 16px;
+
+          padding: 10px 18px;
+
           border-radius: 999px;
+
           background: #4ade80;
+
           color: #02140a;
+
           font-weight: 900;
           font-size: 13px;
-          box-shadow: 0 8px 30px rgba(74,222,128,0.35);
-          transition: transform 0.2s ease;
+
+          box-shadow:
+            0 8px 30px rgba(74,222,128,0.35);
+
+          transition:
+            transform 0.2s ease,
+            box-shadow 0.2s ease;
+        }
+
+        .button:hover {
+          box-shadow:
+            0 10px 40px rgba(74,222,128,0.55);
         }
 
         .button:active {
@@ -227,7 +272,14 @@ export default function HomePage() {
         .button-purple {
           background: #c084fc;
           color: #190524;
-          box-shadow: 0 8px 30px rgba(192,132,252,0.35);
+
+          box-shadow:
+            0 8px 30px rgba(192,132,252,0.35);
+        }
+
+        .button-purple:hover {
+          box-shadow:
+            0 10px 40px rgba(192,132,252,0.55);
         }
 
         @media (max-width: 640px) {
@@ -235,32 +287,37 @@ export default function HomePage() {
             padding: 12px;
           }
 
+          .main-logo {
+            width: 95px;
+            height: 95px;
+          }
+
           .cards {
             grid-template-columns: 1fr;
-            gap: 12px;
+            gap: 14px;
           }
 
           .card {
-            min-height: 185px;
-            border-radius: 20px;
+            min-height: 210px;
+            border-radius: 22px;
           }
 
           .content {
-            min-height: 185px;
-            padding: 16px;
+            min-height: 210px;
+            padding: 18px;
           }
 
           .card-title {
-            font-size: 25px;
+            font-size: 24px;
           }
 
           .card-text {
             font-size: 12px;
-            margin-bottom: 12px;
+            margin-bottom: 14px;
           }
 
           .button {
-            padding: 9px 15px;
+            padding: 10px 18px;
             font-size: 12px;
           }
         }
@@ -310,13 +367,17 @@ export default function HomePage() {
             <div className="content">
               <div className="badge">6 DIVISIONS</div>
 
-              <h2 className="card-title">Men / Mixed League</h2>
+              <h2 className="card-title">
+                Men / Mixed League
+              </h2>
 
               <p className="card-text">
                 Competitive matches. Climb the table and battle for the title.
               </p>
 
-              <div className="button">View League →</div>
+              <div className="button">
+                View League →
+              </div>
             </div>
           </a>
 
@@ -330,9 +391,13 @@ export default function HomePage() {
             <div className="overlay" />
 
             <div className="content">
-              <div className="badge purple">3 DIVISIONS</div>
+              <div className="badge purple">
+                3 DIVISIONS
+              </div>
 
-              <h2 className="card-title">Ladies / Mixed League</h2>
+              <h2 className="card-title">
+                Ladies / Mixed League
+              </h2>
 
               <p className="card-text">
                 Fun, social and competitive. Join the growing community.
