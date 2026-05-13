@@ -345,7 +345,7 @@ export default function HomePage() {
                 Competitive matches. Climb the table and battle for the title.
               </p>
 
-              <div className="button">Enter League →</div>
+              <div className="button">View League →</div>
             </div>
           </a>
 
@@ -367,7 +367,7 @@ export default function HomePage() {
                 Fun, social and competitive. Join the growing community.
               </p>
 
-              <div className="button button-purple">Enter League →</div>
+              <div className="button button-purple">View League →</div>
             </div>
           </a>
         </section>
