@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -16,7 +16,6 @@ export const metadata: Metadata = {
   title: "Cleveland Padel League",
   description: "League tables and fixtures",
   manifest: "/manifest.json",
-  themeColor: "#000000",
   icons: {
     icon: "/icon-192.png",
     apple: "/icon-192.png",
@@ -26,6 +25,13 @@ export const metadata: Metadata = {
     title: "Cleveland Padel",
     statusBarStyle: "default",
   },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  themeColor: "#000000",
 };
 
 export default function RootLayout({
