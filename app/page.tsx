@@ -1,354 +1,362 @@
-export default async function Home({
-  searchParams,
-}: {
-  searchParams?: Promise<{ admin?: string }>;
-}) {
-  const params = await searchParams;
-  const isAdmin = params?.admin === "true";
-
-  const adminQuery = isAdmin ? "&admin=true" : "";
-
+export default function HomePage() {
   return (
-    <main
-      style={{
-        minHeight: "100vh",
-        background:
-          "radial-gradient(circle at top left, rgba(34,197,94,0.20), transparent 32%), radial-gradient(circle at bottom right, rgba(34,197,94,0.18), transparent 30%), linear-gradient(135deg, #020617 0%, #0f172a 45%, #020617 100%)",
-        color: "#ffffff",
-        fontFamily: "Arial, sans-serif",
-        padding: "28px",
-      }}
-    >
-      <div style={{ maxWidth: "1180px", margin: "0 auto" }}>
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            gap: "34px",
-            marginBottom: "36px",
-          }}
-        >
-          <img
-            src="/logo.png"
-            alt="Cleveland Padel League"
-            style={{
-              width: "145px",
-              background: "rgba(255,255,255,0.92)",
-              padding: "12px",
-              borderRadius: "18px",
-            }}
-          />
+    <>
+      <style jsx>{`
+        .page {
+          min-height: 100vh;
+          background:
+            radial-gradient(circle at top left, rgba(34,197,94,0.18), transparent 22%),
+            radial-gradient(circle at top right, rgba(59,130,246,0.15), transparent 28%),
+            linear-gradient(180deg, #020617 0%, #071226 100%);
+          color: white;
+          padding: 28px 20px 60px;
+          font-family: Arial, sans-serif;
+          overflow-x: hidden;
+        }
 
-          <div
-            style={{
-              height: "86px",
-              width: "1px",
-              background: "rgba(255,255,255,0.45)",
-            }}
-          />
+        .container {
+          max-width: 1200px;
+          margin: 0 auto;
+        }
 
-          <img
-            src="/padel-up-logo.png"
-            alt="Padel Up"
-            style={{
-              width: "160px",
-              objectFit: "contain",
-            }}
-          />
-        </div>
+        .hero {
+          text-align: center;
+          margin-bottom: 50px;
+          position: relative;
+        }
 
-        {isAdmin && (
-          <div
-            style={{
-              maxWidth: "280px",
-              margin: "0 auto 24px",
-              border: "1px solid rgba(34,197,94,0.7)",
-              color: "#86efac",
-              padding: "10px 16px",
-              borderRadius: "999px",
-              textAlign: "center",
-              fontWeight: "bold",
-              background: "rgba(34,197,94,0.08)",
-            }}
-          >
-            🔒 Admin View Active
-          </div>
-        )}
+        .logo {
+          width: 130px;
+          height: 130px;
+          object-fit: contain;
+          border-radius: 26px;
+          background: rgba(255,255,255,0.08);
+          padding: 14px;
+          border: 1px solid rgba(255,255,255,0.1);
+          margin-bottom: 20px;
+          box-shadow: 0 10px 40px rgba(0,0,0,0.35);
+        }
 
-        <section style={{ textAlign: "center", marginBottom: "46px" }}>
-          <h1
-            style={{
-              fontSize: "clamp(42px, 7vw, 76px)",
-              lineHeight: "1",
-              margin: "0 0 18px",
-              fontWeight: "900",
-              letterSpacing: "-2px",
-            }}
-          >
-            Cleveland Padel League
-          </h1>
+        .title {
+          font-size: clamp(42px, 7vw, 92px);
+          font-weight: 900;
+          line-height: 1;
+          margin-bottom: 18px;
+          letter-spacing: -2px;
+        }
 
-          <p
-            style={{
-              fontSize: "clamp(20px, 3vw, 30px)",
-              color: "#e5e7eb",
-              margin: "0 0 26px",
-            }}
-          >
-            Competitive. Social.{" "}
-            <span style={{ color: "#4ade80" }}>Community.</span>
-          </p>
+        .subtitle {
+          font-size: clamp(18px, 2vw, 32px);
+          color: rgba(255,255,255,0.88);
+          margin-bottom: 20px;
+        }
 
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "center",
-              flexWrap: "wrap",
-              gap: "18px",
-              color: "#d1d5db",
-              fontSize: "18px",
-            }}
-          >
-            <span>📅 Fixtures</span>
-            <span style={{ color: "#4ade80" }}>|</span>
-            <span>🏆 Results & Tables</span>
-            <span style={{ color: "#4ade80" }}>|</span>
-            <span>💳 Payments</span>
-          </div>
-        </section>
+        .subtitle span {
+          color: #4ade80;
+        }
 
-        <section
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
-            gap: "24px",
-            marginBottom: "34px",
-          }}
-        >
-          <a
-            href={`/league?league=mens&division=1${adminQuery}`}
-            style={{ textDecoration: "none", color: "inherit" }}
-          >
-            <div
-              style={{
-                minHeight: "360px",
-                borderRadius: "28px",
-                padding: "28px",
-                display: "flex",
-                flexDirection: "column",
-                justifyContent: "flex-end",
-                border: "1px solid rgba(34,197,94,0.65)",
-                background:
-                  "linear-gradient(to top, rgba(2,6,23,0.96), rgba(2,6,23,0.45)), radial-gradient(circle at top right, rgba(34,197,94,0.32), transparent 35%), linear-gradient(135deg, #111827, #1e293b)",
-                boxShadow: "0 0 40px rgba(34,197,94,0.14)",
-              }}
+        .mini-links {
+          display: flex;
+          justify-content: center;
+          gap: 18px;
+          flex-wrap: wrap;
+          font-size: 15px;
+          color: rgba(255,255,255,0.72);
+          margin-top: 12px;
+        }
+
+        .cards {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+          gap: 26px;
+          margin-top: 40px;
+        }
+
+        .card {
+          position: relative;
+          overflow: hidden;
+          border-radius: 28px;
+          min-height: 460px;
+          padding: 28px;
+          display: flex;
+          flex-direction: column;
+          justify-content: flex-end;
+          border: 1px solid rgba(74,222,128,0.32);
+          transition: all 0.3s ease;
+          text-decoration: none;
+          color: white;
+          box-shadow: 0 20px 40px rgba(0,0,0,0.35);
+        }
+
+        .card:hover {
+          transform: translateY(-6px);
+          border-color: rgba(74,222,128,0.8);
+          box-shadow: 0 25px 60px rgba(34,197,94,0.18);
+        }
+
+        .mens-card {
+          background:
+            linear-gradient(to top, rgba(2,6,23,0.90), rgba(2,6,23,0.45)),
+            url("/league-cards.jpg");
+
+          background-size: cover;
+          background-position: left center;
+          background-repeat: no-repeat;
+        }
+
+        .ladies-card {
+          background:
+            linear-gradient(to top, rgba(2,6,23,0.90), rgba(2,6,23,0.45)),
+            url("/league-cards.jpg");
+
+          background-size: cover;
+          background-position: right center;
+          background-repeat: no-repeat;
+        }
+
+        .badge {
+          position: absolute;
+          top: 24px;
+          left: 24px;
+          background: rgba(2,6,23,0.82);
+          border: 1px solid #4ade80;
+          color: #86efac;
+          padding: 8px 14px;
+          border-radius: 999px;
+          font-size: 13px;
+          font-weight: bold;
+          backdrop-filter: blur(8px);
+        }
+
+        .card h2 {
+          font-size: clamp(34px, 4vw, 54px);
+          margin-bottom: 14px;
+          line-height: 1;
+          font-weight: 900;
+        }
+
+        .card p {
+          font-size: 20px;
+          line-height: 1.5;
+          color: rgba(255,255,255,0.88);
+          max-width: 420px;
+          margin-bottom: 26px;
+        }
+
+        .button {
+          display: inline-flex;
+          align-items: center;
+          gap: 10px;
+          background: rgba(2,6,23,0.84);
+          border: 1px solid #4ade80;
+          color: #86efac;
+          padding: 14px 24px;
+          border-radius: 999px;
+          font-weight: bold;
+          font-size: 16px;
+          width: fit-content;
+          transition: all 0.2s ease;
+        }
+
+        .button:hover {
+          background: #4ade80;
+          color: #02110a;
+        }
+
+        .stats {
+          margin-top: 34px;
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+          gap: 18px;
+        }
+
+        .stat {
+          background: rgba(255,255,255,0.05);
+          border: 1px solid rgba(255,255,255,0.08);
+          border-radius: 22px;
+          padding: 24px;
+          text-align: center;
+          backdrop-filter: blur(12px);
+        }
+
+        .stat-number {
+          font-size: 34px;
+          font-weight: 900;
+          color: #4ade80;
+          margin-bottom: 8px;
+        }
+
+        .stat-label {
+          color: rgba(255,255,255,0.72);
+          font-size: 15px;
+        }
+
+        .footer {
+          margin-top: 60px;
+          text-align: center;
+          color: rgba(255,255,255,0.55);
+          font-size: 14px;
+        }
+
+        @media (max-width: 768px) {
+          .page {
+            padding: 20px 14px 40px;
+          }
+
+          .cards {
+            grid-template-columns: 1fr;
+          }
+
+          .card {
+            min-height: 380px;
+            padding: 22px;
+          }
+
+          .card h2 {
+            font-size: 38px;
+          }
+
+          .card p {
+            font-size: 17px;
+          }
+
+          .mini-links {
+            gap: 12px;
+            font-size: 14px;
+          }
+
+          .logo {
+            width: 100px;
+            height: 100px;
+          }
+        }
+      `}</style>
+
+      <main className="page">
+        <div className="container">
+
+          <section className="hero">
+            <img
+              src="/logo.png"
+              alt="Cleveland Padel League"
+              className="logo"
+            />
+
+            <h1 className="title">
+              Cleveland Padel League
+            </h1>
+
+            <p className="subtitle">
+              Competitive. Social. <span>Community.</span>
+            </p>
+
+            <div className="mini-links">
+              <span>📅 Fixtures</span>
+              <span>|</span>
+              <span>🏆 Results & Tables</span>
+              <span>|</span>
+              <span>💳 Payments</span>
+            </div>
+          </section>
+
+          <section className="cards">
+
+            <a
+              href="/league?league=mens"
+              className="card mens-card"
             >
-              <div
-                style={{
-                  width: "fit-content",
-                  border: "1px solid #4ade80",
-                  color: "#86efac",
-                  padding: "6px 12px",
-                  borderRadius: "999px",
-                  fontWeight: "bold",
-                  fontSize: "13px",
-                  marginBottom: "18px",
-                  background: "rgba(34,197,94,0.10)",
-                }}
-              >
+              <div className="badge">
                 6 DIVISIONS
               </div>
 
-              <h2
-                style={{
-                  fontSize: "34px",
-                  margin: "0 0 14px",
-                  fontWeight: "850",
-                }}
-              >
+              <h2>
                 Men / Mixed League
               </h2>
 
-              <p
-                style={{
-                  color: "#d1d5db",
-                  fontSize: "18px",
-                  lineHeight: "1.5",
-                  maxWidth: "420px",
-                  marginBottom: "24px",
-                }}
-              >
-                Competitive matches. Great people. Climb the table and be the
-                champion.
+              <p>
+                Competitive matches. Great people.
+                Climb the table and be the champion.
               </p>
 
-              <div
-                style={{
-                  width: "fit-content",
-                  border: "1px solid #4ade80",
-                  color: "#4ade80",
-                  padding: "12px 28px",
-                  borderRadius: "999px",
-                  fontWeight: "bold",
-                  fontSize: "16px",
-                }}
-              >
+              <div className="button">
                 View League →
               </div>
-            </div>
-          </a>
+            </a>
 
-          <a
-            href={`/league?league=ladies&division=1${adminQuery}`}
-            style={{ textDecoration: "none", color: "inherit" }}
-          >
-            <div
-              style={{
-                minHeight: "360px",
-                borderRadius: "28px",
-                padding: "28px",
-                display: "flex",
-                flexDirection: "column",
-                justifyContent: "flex-end",
-                border: "1px solid rgba(34,197,94,0.65)",
-                background:
-                  "linear-gradient(to top, rgba(2,6,23,0.96), rgba(2,6,23,0.45)), radial-gradient(circle at top right, rgba(34,197,94,0.32), transparent 35%), linear-gradient(135deg, #1e1b4b, #111827)",
-                boxShadow: "0 0 40px rgba(34,197,94,0.14)",
-              }}
+            <a
+              href="/league?league=ladies"
+              className="card ladies-card"
             >
-              <div
-                style={{
-                  width: "fit-content",
-                  border: "1px solid #4ade80",
-                  color: "#86efac",
-                  padding: "6px 12px",
-                  borderRadius: "999px",
-                  fontWeight: "bold",
-                  fontSize: "13px",
-                  marginBottom: "18px",
-                  background: "rgba(34,197,94,0.10)",
-                }}
-              >
+              <div className="badge">
                 3 DIVISIONS
               </div>
 
-              <h2
-                style={{
-                  fontSize: "34px",
-                  margin: "0 0 14px",
-                  fontWeight: "850",
-                }}
-              >
+              <h2>
                 Ladies / Mixed League
               </h2>
 
-              <p
-                style={{
-                  color: "#d1d5db",
-                  fontSize: "18px",
-                  lineHeight: "1.5",
-                  maxWidth: "420px",
-                  marginBottom: "24px",
-                }}
-              >
-                Fun, social and competitive. Join, play and enjoy the game.
+              <p>
+                Fun, social and competitive.
+                Join, play and enjoy the game.
               </p>
 
-              <div
-                style={{
-                  width: "fit-content",
-                  border: "1px solid #4ade80",
-                  color: "#4ade80",
-                  padding: "12px 28px",
-                  borderRadius: "999px",
-                  fontWeight: "bold",
-                  fontSize: "16px",
-                }}
-              >
+              <div className="button">
                 View League →
               </div>
-            </div>
-          </a>
-        </section>
+            </a>
 
-        <section
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
-            gap: "0",
-            border: "1px solid rgba(255,255,255,0.12)",
-            borderRadius: "24px",
-            overflow: "hidden",
-            background: "rgba(15,23,42,0.72)",
-            backdropFilter: "blur(14px)",
-            marginBottom: "34px",
-          }}
-        >
-          {[
-            ["👥", "170+", "Players"],
-            ["📅", "Weekly", "Fixtures"],
-            ["🏆", "Live", "Tables"],
-            ["💳", "Secure", "Payments"],
-          ].map(([icon, title, label]) => (
-            <div
-              key={title}
-              style={{
-                padding: "28px",
-                textAlign: "center",
-                borderRight: "1px solid rgba(255,255,255,0.10)",
-              }}
-            >
-              <div style={{ fontSize: "34px", marginBottom: "8px" }}>
-                {icon}
+          </section>
+
+          <section className="stats">
+
+            <div className="stat">
+              <div className="stat-number">
+                170+
               </div>
-              <div
-                style={{
-                  fontSize: "26px",
-                  fontWeight: "850",
-                  marginBottom: "4px",
-                }}
-              >
-                {title}
-              </div>
-              <div style={{ color: "#cbd5e1", fontSize: "16px" }}>
-                {label}
+
+              <div className="stat-label">
+                Players
               </div>
             </div>
-          ))}
-        </section>
 
-        <footer
-          style={{
-            textAlign: "center",
-            padding: "30px 0 10px",
-            color: "#cbd5e1",
-          }}
-        >
-          <div
-            style={{
-              letterSpacing: "4px",
-              fontSize: "13px",
-              marginBottom: "12px",
-            }}
-          >
-            POWERED BY
-          </div>
+            <div className="stat">
+              <div className="stat-number">
+                Weekly
+              </div>
 
-          <img
-            src="/padel-up-logo.png"
-            alt="Padel Up"
-            style={{
-              width: "150px",
-              marginBottom: "14px",
-            }}
-          />
+              <div className="stat-label">
+                Fixtures
+              </div>
+            </div>
 
-          <div style={{ color: "#86efac", fontWeight: "bold" }}>
-            📍 Padel Up, Middlesbrough
-          </div>
-        </footer>
-      </div>
-    </main>
+            <div className="stat">
+              <div className="stat-number">
+                Live
+              </div>
+
+              <div className="stat-label">
+                Tables
+              </div>
+            </div>
+
+            <div className="stat">
+              <div className="stat-number">
+                Secure
+              </div>
+
+              <div className="stat-label">
+                Payments
+              </div>
+            </div>
+
+          </section>
+
+          <footer className="footer">
+            Cleveland Padel League © 2026
+          </footer>
+
+        </div>
+      </main>
+    </>
   );
 }
