@@ -4,6 +4,10 @@ import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
+function leagueRedirect(leagueType: string, divisionId: number, extra = "") {
+  redirect(`/league?league=${leagueType}&division=${divisionId}&admin=true${extra}`);
+}
+
 async function addFixture(formData: FormData) {
   "use server";
 
@@ -14,13 +18,14 @@ async function addFixture(formData: FormData) {
   const fixtureDay = String(formData.get("fixture_day") || "").trim();
   const fixtureTime = String(formData.get("fixture_time") || "").trim();
   const isPrivateGame = formData.get("is_private_game") === "on";
+  const leagueType = String(formData.get("league_type") || "mens");
 
   if (!divisionId || !round || !homeTeamId || !awayTeamId) {
-    redirect(`/?division=${divisionId}&admin=true`);
+    leagueRedirect(leagueType, divisionId);
   }
 
   if (homeTeamId === awayTeamId) {
-    redirect(`/?division=${divisionId}&admin=true`);
+    leagueRedirect(leagueType, divisionId);
   }
 
   await supabase.from("fixtures").insert({
@@ -43,9 +48,10 @@ async function addFixture(formData: FormData) {
   });
 
   revalidatePath("/");
+  revalidatePath("/league");
   revalidatePath("/summary");
 
-  redirect(`/?division=${divisionId}&admin=true#fixtures`);
+  leagueRedirect(leagueType, divisionId, "#fixtures");
 }
 
 async function updateFixture(formData: FormData) {
@@ -59,13 +65,14 @@ async function updateFixture(formData: FormData) {
   const fixtureDay = String(formData.get("fixture_day") || "").trim();
   const fixtureTime = String(formData.get("fixture_time") || "").trim();
   const isPrivateGame = formData.get("is_private_game") === "on";
+  const leagueType = String(formData.get("league_type") || "mens");
 
   if (!fixtureId || !divisionId || !round || !homeTeamId || !awayTeamId) {
-    redirect(`/?division=${divisionId}&admin=true`);
+    leagueRedirect(leagueType, divisionId);
   }
 
   if (homeTeamId === awayTeamId) {
-    redirect(`/?division=${divisionId}&admin=true`);
+    leagueRedirect(leagueType, divisionId);
   }
 
   await supabase
@@ -81,9 +88,10 @@ async function updateFixture(formData: FormData) {
     .eq("id", fixtureId);
 
   revalidatePath("/");
+  revalidatePath("/league");
   revalidatePath("/summary");
 
-  redirect(`/?division=${divisionId}&admin=true#round-${round}`);
+  leagueRedirect(leagueType, divisionId, `#round-${round}`);
 }
 
 async function togglePrivateGame(formData: FormData) {
@@ -92,6 +100,7 @@ async function togglePrivateGame(formData: FormData) {
   const fixtureId = Number(formData.get("fixture_id"));
   const divisionId = Number(formData.get("division_id"));
   const currentValue = formData.get("current_value") === "true";
+  const leagueType = String(formData.get("league_type") || "mens");
 
   await supabase
     .from("fixtures")
@@ -101,9 +110,10 @@ async function togglePrivateGame(formData: FormData) {
     .eq("id", fixtureId);
 
   revalidatePath("/");
+  revalidatePath("/league");
   revalidatePath("/summary");
 
-  redirect(`/?division=${divisionId}&admin=true`);
+  leagueRedirect(leagueType, divisionId);
 }
 
 async function submitScore(formData: FormData) {
@@ -111,6 +121,7 @@ async function submitScore(formData: FormData) {
 
   const fixtureId = Number(formData.get("fixture_id"));
   const divisionId = Number(formData.get("division_id"));
+  const leagueType = String(formData.get("league_type") || "mens");
 
   const h1 = Number(formData.get("home_set1"));
   const a1 = Number(formData.get("away_set1"));
@@ -155,10 +166,10 @@ async function submitScore(formData: FormData) {
     .eq("id", fixtureId);
 
   revalidatePath("/");
+  revalidatePath("/league");
   revalidatePath("/summary");
-  revalidatePath(`/team/${fixtureId}`);
 
-  redirect(`/?division=${divisionId}&admin=true`);
+  leagueRedirect(leagueType, divisionId);
 }
 
 async function resetScore(formData: FormData) {
@@ -166,6 +177,7 @@ async function resetScore(formData: FormData) {
 
   const fixtureId = Number(formData.get("fixture_id"));
   const divisionId = Number(formData.get("division_id"));
+  const leagueType = String(formData.get("league_type") || "mens");
 
   await supabase
     .from("fixtures")
@@ -183,9 +195,10 @@ async function resetScore(formData: FormData) {
     .eq("id", fixtureId);
 
   revalidatePath("/");
+  revalidatePath("/league");
   revalidatePath("/summary");
 
-  redirect(`/?division=${divisionId}&admin=true`);
+  leagueRedirect(leagueType, divisionId);
 }
 
 export default async function Home({
@@ -194,11 +207,13 @@ export default async function Home({
   searchParams?: Promise<{
     division?: string;
     admin?: string;
+    league?: string;
   }>;
 }) {
   const params = await searchParams;
 
   const selectedDivisionId = Number(params?.division || 1);
+  const selectedLeague = params?.league || "mens";
   const isAdmin = params?.admin === "true";
 
   const { data: divisions } = await supabase
@@ -418,6 +433,8 @@ export default async function Home({
     boxSizing: "border-box" as const,
   };
 
+  const adminQuery = isAdmin ? "&admin=true" : "";
+
   return (
     <main
       id="top"
@@ -431,6 +448,25 @@ export default async function Home({
         fontFamily: "Arial",
       }}
     >
+      <div style={{ marginBottom: "14px" }}>
+        <a
+          href={`/?${isAdmin ? "admin=true" : ""}`}
+          style={{
+            display: "inline-block",
+            background: "#eeeeee",
+            color: "#000000",
+            padding: "9px 14px",
+            borderRadius: "999px",
+            textDecoration: "none",
+            fontWeight: "bold",
+            border: "1px solid #dddddd",
+            marginBottom: "10px",
+          }}
+        >
+          ← League Home
+        </a>
+      </div>
+
       {currentDivision.logo_url && (
         <div
           style={{
@@ -497,7 +533,7 @@ export default async function Home({
         {divisions?.map((division: any) => (
           <a
             key={division.id}
-            href={`/?division=${division.id}${isAdmin ? "&admin=true" : ""}`}
+            href={`/league?league=${selectedLeague}&division=${division.id}${adminQuery}`}
             style={{
               padding: "10px 14px",
               borderRadius: "999px",
@@ -569,7 +605,7 @@ export default async function Home({
 
       <div style={{ marginBottom: "20px", textAlign: "center" }}>
         <a
-          href="/summary"
+          href={`/summary?league=${selectedLeague}${adminQuery}`}
           style={{
             display: "inline-block",
             background: primary,
@@ -596,7 +632,8 @@ export default async function Home({
           background: "#ffffff",
           marginBottom: "26px",
         }}
-      >        <table
+      >
+        <table
           style={{
             width: "100%",
             borderCollapse: "collapse",
@@ -702,11 +739,8 @@ export default async function Home({
           </h3>
 
           <form action={addFixture}>
-            <input
-              type="hidden"
-              name="division_id"
-              value={selectedDivisionId}
-            />
+            <input type="hidden" name="division_id" value={selectedDivisionId} />
+            <input type="hidden" name="league_type" value={selectedLeague} />
 
             <div style={{ marginBottom: "10px" }}>
               <label
@@ -1000,17 +1034,9 @@ export default async function Home({
                     </div>
 
                     <form action={updateFixture}>
-                      <input
-                        type="hidden"
-                        name="fixture_id"
-                        value={fixture.id}
-                      />
-
-                      <input
-                        type="hidden"
-                        name="division_id"
-                        value={selectedDivisionId}
-                      />
+                      <input type="hidden" name="fixture_id" value={fixture.id} />
+                      <input type="hidden" name="division_id" value={selectedDivisionId} />
+                      <input type="hidden" name="league_type" value={selectedLeague} />
 
                       <div
                         style={{
@@ -1173,13 +1199,8 @@ export default async function Home({
                     style={{ marginBottom: "10px" }}
                   >
                     <input type="hidden" name="fixture_id" value={fixture.id} />
-
-                    <input
-                      type="hidden"
-                      name="division_id"
-                      value={selectedDivisionId}
-                    />
-
+                    <input type="hidden" name="division_id" value={selectedDivisionId} />
+                    <input type="hidden" name="league_type" value={selectedLeague} />
                     <input
                       type="hidden"
                       name="current_value"
@@ -1245,156 +1266,15 @@ export default async function Home({
                         alignItems: "stretch",
                       }}
                     >
-                      <div
-                        style={{
-                          display: "grid",
-                          gridTemplateColumns: "1fr 1fr",
-                          gap: "18px",
-                          textAlign: "center",
-                        }}
-                      >
-                        {homePayments.map((payment: any) => {
-                          const amountDue = Number(payment.amount_due || 0);
-                          const amountPaid = Number(payment.amount_paid || 0);
-                          const remaining = amountDue - amountPaid;
-                          const isPaid = remaining <= 0;
-
-                          return (
-                            <div key={payment.id}>
-                              <div
-                                style={{
-                                  width: "86px",
-                                  height: "86px",
-                                  borderRadius: "50%",
-                                  background: "#12202f",
-                                  color: "#ffffff",
-                                  display: "flex",
-                                  alignItems: "center",
-                                  justifyContent: "center",
-                                  margin: "0 auto 10px",
-                                  fontSize: "30px",
-                                  fontWeight: "500",
-                                }}
-                              >
-                                {getInitials(payment.player_name)}
-                              </div>
-
-                              <div
-                                style={{
-                                  fontSize: "22px",
-                                  fontWeight: "500",
-                                  color: "#12202f",
-                                  whiteSpace: "nowrap",
-                                  overflow: "hidden",
-                                  textOverflow: "ellipsis",
-                                }}
-                              >
-                                {payment.player_name}
-                              </div>
-
-                              {!fixture.is_private_game && (
-                                <div
-                                  style={{
-                                    display: "inline-block",
-                                    background: "#caff3d",
-                                    padding: "4px 12px",
-                                    borderRadius: "999px",
-                                    marginTop: "8px",
-                                    fontWeight: "bold",
-                                    fontSize: "18px",
-                                    color: "#12202f",
-                                  }}
-                                >
-                                  £{amountDue}
-                                </div>
-                              )}
-
-                              {fixture.is_private_game ? (
-                                <div
-                                  style={{
-                                    marginTop: "12px",
-                                    fontSize: "16px",
-                                    fontWeight: "bold",
-                                    color: "#166534",
-                                  }}
-                                >
-                                  No payment required
-                                </div>
-                              ) : (
-                                <>
-                                  <div
-                                    style={{
-                                      marginTop: "12px",
-                                      fontSize: "20px",
-                                      fontWeight: "bold",
-                                      color: isPaid ? "#12202f" : "#cc0000",
-                                    }}
-                                  >
-                                    {isPaid ? "Paid" : "Not paid"}
-                                  </div>
-
-                                  {isPaid ? (
-                                    <div
-                                      style={{
-                                        fontSize: "34px",
-                                        marginTop: "8px",
-                                      }}
-                                    >
-                                      🪙
-                                    </div>
-                                  ) : (
-                                    <form
-                                      action="/api/create-checkout-session"
-                                      method="POST"
-                                    >
-                                      <input
-                                        type="hidden"
-                                        name="payment_id"
-                                        value={payment.id}
-                                      />
-
-                                      <input
-                                        type="hidden"
-                                        name="amount"
-                                        value={remaining}
-                                      />
-
-                                      <button
-                                        type="submit"
-                                        style={{
-                                          marginTop: "10px",
-                                          background: primary,
-                                          color: textColor,
-                                          border: "none",
-                                          padding: "8px 12px",
-                                          borderRadius: "8px",
-                                          fontWeight: "bold",
-                                          cursor: "pointer",
-                                        }}
-                                      >
-                                        Pay £{remaining}
-                                      </button>
-                                    </form>
-                                  )}
-                                </>
-                              )}
-                            </div>
-                          );
-                        })}
-
-                        <div
-                          style={{
-                            gridColumn: "1 / -1",
-                            textAlign: "left",
-                            fontSize: "34px",
-                            fontWeight: "bold",
-                            color: "#6b7280",
-                            marginTop: "14px",
-                          }}
-                        >
-                          A
-                        </div>
-                      </div>
+                      <PaymentColumn
+                        payments={homePayments}
+                        fixture={fixture}
+                        side="A"
+                        align="left"
+                        primary={primary}
+                        textColor={textColor}
+                        getInitials={getInitials}
+                      />
 
                       <div
                         style={{
@@ -1404,156 +1284,15 @@ export default async function Home({
                         }}
                       />
 
-                      <div
-                        style={{
-                          display: "grid",
-                          gridTemplateColumns: "1fr 1fr",
-                          gap: "18px",
-                          textAlign: "center",
-                        }}
-                      >
-                        {awayPayments.map((payment: any) => {
-                          const amountDue = Number(payment.amount_due || 0);
-                          const amountPaid = Number(payment.amount_paid || 0);
-                          const remaining = amountDue - amountPaid;
-                          const isPaid = remaining <= 0;
-
-                          return (
-                            <div key={payment.id}>
-                              <div
-                                style={{
-                                  width: "86px",
-                                  height: "86px",
-                                  borderRadius: "50%",
-                                  background: "#12202f",
-                                  color: "#ffffff",
-                                  display: "flex",
-                                  alignItems: "center",
-                                  justifyContent: "center",
-                                  margin: "0 auto 10px",
-                                  fontSize: "30px",
-                                  fontWeight: "500",
-                                }}
-                              >
-                                {getInitials(payment.player_name)}
-                              </div>
-
-                              <div
-                                style={{
-                                  fontSize: "22px",
-                                  fontWeight: "500",
-                                  color: "#12202f",
-                                  whiteSpace: "nowrap",
-                                  overflow: "hidden",
-                                  textOverflow: "ellipsis",
-                                }}
-                              >
-                                {payment.player_name}
-                              </div>
-
-                              {!fixture.is_private_game && (
-                                <div
-                                  style={{
-                                    display: "inline-block",
-                                    background: "#caff3d",
-                                    padding: "4px 12px",
-                                    borderRadius: "999px",
-                                    marginTop: "8px",
-                                    fontWeight: "bold",
-                                    fontSize: "18px",
-                                    color: "#12202f",
-                                  }}
-                                >
-                                  £{amountDue}
-                                </div>
-                              )}
-
-                              {fixture.is_private_game ? (
-                                <div
-                                  style={{
-                                    marginTop: "12px",
-                                    fontSize: "16px",
-                                    fontWeight: "bold",
-                                    color: "#166534",
-                                  }}
-                                >
-                                  No payment required
-                                </div>
-                              ) : (
-                                <>
-                                  <div
-                                    style={{
-                                      marginTop: "12px",
-                                      fontSize: "20px",
-                                      fontWeight: "bold",
-                                      color: isPaid ? "#12202f" : "#cc0000",
-                                    }}
-                                  >
-                                    {isPaid ? "Paid" : "Not paid"}
-                                  </div>
-
-                                  {isPaid ? (
-                                    <div
-                                      style={{
-                                        fontSize: "34px",
-                                        marginTop: "8px",
-                                      }}
-                                    >
-                                      🪙
-                                    </div>
-                                  ) : (
-                                    <form
-                                      action="/api/create-checkout-session"
-                                      method="POST"
-                                    >
-                                      <input
-                                        type="hidden"
-                                        name="payment_id"
-                                        value={payment.id}
-                                      />
-
-                                      <input
-                                        type="hidden"
-                                        name="amount"
-                                        value={remaining}
-                                      />
-
-                                      <button
-                                        type="submit"
-                                        style={{
-                                          marginTop: "10px",
-                                          background: primary,
-                                          color: textColor,
-                                          border: "none",
-                                          padding: "8px 12px",
-                                          borderRadius: "8px",
-                                          fontWeight: "bold",
-                                          cursor: "pointer",
-                                        }}
-                                      >
-                                        Pay £{remaining}
-                                      </button>
-                                    </form>
-                                  )}
-                                </>
-                              )}
-                            </div>
-                          );
-                        })}
-
-                        <div
-                          style={{
-                            gridColumn: "1 / -1",
-                            textAlign: "right",
-                            fontSize: "34px",
-                            fontWeight: "bold",
-                            color: "#6b7280",
-                            marginTop: "14px",
-                          }}
-                        >
-                          B
-                        </div>
-                      </div>
+                      <PaymentColumn
+                        payments={awayPayments}
+                        fixture={fixture}
+                        side="B"
+                        align="right"
+                        primary={primary}
+                        textColor={textColor}
+                        getInitials={getInitials}
+                      />
                     </div>
                   ) : (
                     <p
@@ -1592,12 +1331,8 @@ export default async function Home({
                 {isAdmin && !fixture.played && (
                   <form action={submitScore} style={{ marginTop: "10px" }}>
                     <input type="hidden" name="fixture_id" value={fixture.id} />
-
-                    <input
-                      type="hidden"
-                      name="division_id"
-                      value={selectedDivisionId}
-                    />
+                    <input type="hidden" name="division_id" value={selectedDivisionId} />
+                    <input type="hidden" name="league_type" value={selectedLeague} />
 
                     {[1, 2].map((set) => (
                       <div key={set} style={{ marginBottom: "8px" }}>
@@ -1696,12 +1431,8 @@ export default async function Home({
                 {isAdmin && fixture.played && (
                   <form action={resetScore} style={{ marginTop: "10px" }}>
                     <input type="hidden" name="fixture_id" value={fixture.id} />
-
-                    <input
-                      type="hidden"
-                      name="division_id"
-                      value={selectedDivisionId}
-                    />
+                    <input type="hidden" name="division_id" value={selectedDivisionId} />
+                    <input type="hidden" name="league_type" value={selectedLeague} />
 
                     <button
                       type="submit"
@@ -1746,5 +1477,156 @@ export default async function Home({
         </div>
       ))}
     </main>
+  );
+}
+
+function PaymentColumn({
+  payments,
+  fixture,
+  side,
+  align,
+  primary,
+  textColor,
+  getInitials,
+}: any) {
+  return (
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: "1fr 1fr",
+        gap: "18px",
+        textAlign: "center",
+      }}
+    >
+      {payments.map((payment: any) => {
+        const amountDue = Number(payment.amount_due || 0);
+        const amountPaid = Number(payment.amount_paid || 0);
+        const remaining = amountDue - amountPaid;
+        const isPaid = remaining <= 0;
+
+        return (
+          <div key={payment.id}>
+            <div
+              style={{
+                width: "86px",
+                height: "86px",
+                borderRadius: "50%",
+                background: "#12202f",
+                color: "#ffffff",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                margin: "0 auto 10px",
+                fontSize: "30px",
+                fontWeight: "500",
+              }}
+            >
+              {getInitials(payment.player_name)}
+            </div>
+
+            <div
+              style={{
+                fontSize: "22px",
+                fontWeight: "500",
+                color: "#12202f",
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+              }}
+            >
+              {payment.player_name}
+            </div>
+
+            {!fixture.is_private_game && (
+              <div
+                style={{
+                  display: "inline-block",
+                  background: "#caff3d",
+                  padding: "4px 12px",
+                  borderRadius: "999px",
+                  marginTop: "8px",
+                  fontWeight: "bold",
+                  fontSize: "18px",
+                  color: "#12202f",
+                }}
+              >
+                £{amountDue}
+              </div>
+            )}
+
+            {fixture.is_private_game ? (
+              <div
+                style={{
+                  marginTop: "12px",
+                  fontSize: "16px",
+                  fontWeight: "bold",
+                  color: "#166534",
+                }}
+              >
+                No payment required
+              </div>
+            ) : (
+              <>
+                <div
+                  style={{
+                    marginTop: "12px",
+                    fontSize: "20px",
+                    fontWeight: "bold",
+                    color: isPaid ? "#12202f" : "#cc0000",
+                  }}
+                >
+                  {isPaid ? "Paid" : "Not paid"}
+                </div>
+
+                {isPaid ? (
+                  <div
+                    style={{
+                      fontSize: "34px",
+                      marginTop: "8px",
+                    }}
+                  >
+                    🪙
+                  </div>
+                ) : (
+                  <form action="/api/create-checkout-session" method="POST">
+                    <input type="hidden" name="payment_id" value={payment.id} />
+                    <input type="hidden" name="amount" value={remaining} />
+
+                    <button
+                      type="submit"
+                      style={{
+                        marginTop: "10px",
+                        background: primary,
+                        color: textColor,
+                        border: "none",
+                        padding: "8px 12px",
+                        borderRadius: "8px",
+                        fontWeight: "bold",
+                        cursor: "pointer",
+                      }}
+                    >
+                      Pay £{remaining}
+                    </button>
+                  </form>
+                )}
+              </>
+            )}
+          </div>
+        );
+      })}
+
+      <div
+        style={{
+          gridColumn: "1 / -1",
+          textAlign: align,
+          fontSize: "34px",
+          fontWeight: "bold",
+          color: "#6b7280",
+          marginTop: "14px",
+        }}
+      >
+        {side}
+      </div>
+    </div>
   );
 }
