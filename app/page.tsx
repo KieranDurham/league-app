@@ -13,12 +13,10 @@ export default function HomePage() {
 
         .page {
           min-height: 100vh;
-
           background:
             radial-gradient(circle at top left, rgba(34,197,94,0.22), transparent 30%),
             radial-gradient(circle at bottom right, rgba(168,85,247,0.16), transparent 28%),
             linear-gradient(180deg, #020617 0%, #030712 100%);
-
           color: #ffffff;
           padding: 14px;
           font-family: Arial, sans-serif;
@@ -41,7 +39,6 @@ export default function HomePage() {
           width: 120px;
           object-fit: contain;
           margin-bottom: 10px;
-
           filter:
             drop-shadow(0 0 18px rgba(74,222,128,0.38))
             drop-shadow(0 0 50px rgba(74,222,128,0.14));
@@ -53,9 +50,7 @@ export default function HomePage() {
           line-height: 0.92;
           letter-spacing: -1.6px;
           margin: 0 0 10px;
-
-          text-shadow:
-            0 2px 12px rgba(0,0,0,0.7);
+          text-shadow: 0 2px 12px rgba(0,0,0,0.7);
         }
 
         .subtitle {
@@ -121,12 +116,8 @@ export default function HomePage() {
           min-height: 260px;
           text-decoration: none;
           color: #ffffff;
-
           border: 1px solid rgba(74,222,128,0.42);
-
-          box-shadow:
-            0 18px 60px rgba(0,0,0,0.52);
-
+          box-shadow: 0 18px 60px rgba(0,0,0,0.52);
           transition:
             transform 0.25s ease,
             box-shadow 0.25s ease,
@@ -135,11 +126,8 @@ export default function HomePage() {
 
         .card:hover {
           transform: translateY(-5px);
-
           border-color: rgba(74,222,128,0.85);
-
-          box-shadow:
-            0 25px 80px rgba(34,197,94,0.2);
+          box-shadow: 0 25px 80px rgba(34,197,94,0.2);
         }
 
         .card img {
@@ -152,17 +140,17 @@ export default function HomePage() {
         }
 
         .mens-img {
-          object-position: 76% center;
+          object-position: center;
         }
 
         .ladies-img {
-          object-position: 74% center;
+          object-position: center;
+          filter: brightness(1.08);
         }
 
         .overlay {
           position: absolute;
           inset: 0;
-
           background:
             linear-gradient(
               90deg,
@@ -170,24 +158,19 @@ export default function HomePage() {
               rgba(2,6,23,0.52) 50%,
               rgba(2,6,23,0.86) 100%
             ),
-
             linear-gradient(
               180deg,
               rgba(2,6,23,0.05) 0%,
               rgba(2,6,23,0.94) 100%
             );
-
           z-index: 1;
         }
 
         .content {
           position: relative;
           z-index: 2;
-
           min-height: 260px;
-
           padding: 24px;
-
           display: flex;
           flex-direction: column;
           justify-content: flex-end;
@@ -195,22 +178,14 @@ export default function HomePage() {
 
         .badge {
           width: fit-content;
-
           padding: 8px 16px;
-
           border-radius: 999px;
-
           background: rgba(74,222,128,0.12);
-
           border: 1px solid rgba(74,222,128,0.45);
-
           color: #86efac;
-
           font-size: 11px;
           font-weight: 900;
-
           margin-bottom: 16px;
-
           backdrop-filter: blur(10px);
         }
 
@@ -222,15 +197,10 @@ export default function HomePage() {
 
         .card-title {
           font-size: clamp(28px, 4vw, 42px);
-
           line-height: 0.95;
-
           font-weight: 900;
-
           margin: 0 0 12px;
-
-          text-shadow:
-            0 4px 20px rgba(0,0,0,0.92);
+          text-shadow: 0 4px 20px rgba(0,0,0,0.92);
         }
 
         .accent-green {
@@ -243,43 +213,28 @@ export default function HomePage() {
 
         .card-text {
           color: #f3f4f6;
-
           font-size: 15px;
-
           line-height: 1.5;
-
           margin: 0 0 20px;
-
           max-width: 380px;
-
-          text-shadow:
-            0 2px 8px rgba(0,0,0,0.85);
+          text-shadow: 0 2px 8px rgba(0,0,0,0.85);
         }
 
         .button {
           width: fit-content;
-
           padding: 14px 24px;
-
           border-radius: 999px;
-
           background: #4ade80;
-
           color: #02140a;
-
           font-weight: 900;
           font-size: 15px;
-
-          box-shadow:
-            0 10px 35px rgba(74,222,128,0.35);
+          box-shadow: 0 10px 35px rgba(74,222,128,0.35);
         }
 
         .button-purple {
           background: #c084fc;
           color: #190524;
-
-          box-shadow:
-            0 10px 35px rgba(192,132,252,0.35);
+          box-shadow: 0 10px 35px rgba(192,132,252,0.35);
         }
 
         @media (max-width: 640px) {
@@ -321,9 +276,7 @@ export default function HomePage() {
             className="main-logo"
           />
 
-          <h1 className="title">
-            Cleveland Padel League
-          </h1>
+          <h1 className="title">Cleveland Padel League</h1>
 
           <p className="subtitle">
             Competitive. Social. <span className="green">Community.</span>
@@ -334,29 +287,18 @@ export default function HomePage() {
           </div>
 
           <div className="hosted">
-            <div className="hosted-label">
-              HOSTED AT
-            </div>
+            <div className="hosted-label">HOSTED AT</div>
 
-            <img
-              src="/padelup.png"
-              alt="Padel Up"
-              className="padelup"
-            />
+            <img src="/padelup.png" alt="Padel Up" className="padelup" />
 
-            <div className="location">
-              Stockton-on-Tees
-            </div>
+            <div className="location">Stockton-on-Tees</div>
           </div>
         </section>
 
         <section className="cards">
-          <a
-            href="/league?league=mens&division=1"
-            className="card"
-          >
+          <a href="/league?league=mens&division=1" className="card">
             <img
-              src="/league-cards.jpg"
+              src="/mens-league.jpg"
               alt="Men / Mixed League"
               className="mens-img"
             />
@@ -364,15 +306,11 @@ export default function HomePage() {
             <div className="overlay" />
 
             <div className="content">
-              <div className="badge">
-                6 DIVISIONS
-              </div>
+              <div className="badge">6 DIVISIONS</div>
 
               <h2 className="card-title">
                 Men / Mixed <br />
-                <span className="accent-green">
-                  League
-                </span>
+                <span className="accent-green">League</span>
               </h2>
 
               <p className="card-text">
@@ -381,18 +319,13 @@ export default function HomePage() {
                 Climb the table and battle for the title.
               </p>
 
-              <div className="button">
-                View League →
-              </div>
+              <div className="button">View League →</div>
             </div>
           </a>
 
-          <a
-            href="/league?league=ladies&division=7"
-            className="card"
-          >
+          <a href="/league?league=ladies&division=7" className="card">
             <img
-              src="/league-cards.jpg"
+              src="/ladies-league.jpg"
               alt="Ladies / Mixed League"
               className="ladies-img"
             />
@@ -400,15 +333,11 @@ export default function HomePage() {
             <div className="overlay" />
 
             <div className="content">
-              <div className="badge purple">
-                3 DIVISIONS
-              </div>
+              <div className="badge purple">3 DIVISIONS</div>
 
               <h2 className="card-title">
                 Ladies / Mixed <br />
-                <span className="accent-purple">
-                  League
-                </span>
+                <span className="accent-purple">League</span>
               </h2>
 
               <p className="card-text">
@@ -417,9 +346,7 @@ export default function HomePage() {
                 Join the growing community.
               </p>
 
-              <div className="button button-purple">
-                View League →
-              </div>
+              <div className="button button-purple">View League →</div>
             </div>
           </a>
         </section>
