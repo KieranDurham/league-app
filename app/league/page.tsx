@@ -649,18 +649,19 @@ export default async function Home({
             width: "100%",
             borderCollapse: "collapse",
             color: "#000000",
-            minWidth: "520px",
+minWidth: "100%",
+fontSize: "14px",
           }}
         >
           <thead style={{ background: primary, color: textColor }}>
             <tr>
-              <th style={{ padding: "10px", textAlign: "left" }}>Team</th>
-              <th style={{ padding: "10px" }}>P</th>
-              <th style={{ padding: "10px" }}>W</th>
-              <th style={{ padding: "10px" }}>D</th>
-              <th style={{ padding: "10px" }}>L</th>
-              <th style={{ padding: "10px" }}>GD</th>
-              <th style={{ padding: "10px" }}>Pts</th>
+<th style={{ padding: "8px", textAlign: "left", fontSize: "14px" }}>Team</th>
+<th style={{ padding: "8px 5px", fontSize: "14px" }}>P</th>
+<th style={{ padding: "8px 5px", fontSize: "14px" }}>W</th>
+<th style={{ padding: "8px 5px", fontSize: "14px" }}>D</th>
+<th style={{ padding: "8px 5px", fontSize: "14px" }}>L</th>
+<th style={{ padding: "8px 5px", fontSize: "14px" }}>GD</th>
+<th style={{ padding: "8px 5px", fontSize: "14px" }}>Pts</th>
             </tr>
           </thead>
 
