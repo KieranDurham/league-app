@@ -18,7 +18,7 @@ export default function HomePage() {
             radial-gradient(circle at bottom right, rgba(192,132,252,0.14), transparent 28%),
             linear-gradient(180deg, #020617 0%, #030712 100%);
           color: #ffffff;
-          padding: 18px;
+          padding: 12px;
           font-family: Arial, sans-serif;
         }
 
@@ -29,31 +29,31 @@ export default function HomePage() {
 
         .hero {
           text-align: center;
-          padding: 10px 0 18px;
+          padding: 4px 0 12px;
         }
 
         .main-logo {
-          width: 96px;
-          height: 96px;
+          width: 76px;
+          height: 76px;
           object-fit: cover;
-          border-radius: 22px;
+          border-radius: 16px;
           background: #ffffff;
-          margin-bottom: 14px;
+          margin-bottom: 10px;
           box-shadow: 0 18px 50px rgba(0,0,0,0.42);
         }
 
         .title {
-          font-size: clamp(34px, 6vw, 66px);
+          font-size: clamp(31px, 6vw, 62px);
           font-weight: 900;
-          line-height: 0.95;
-          letter-spacing: -1.5px;
-          margin: 0 0 10px;
+          line-height: 0.98;
+          letter-spacing: -1px;
+          margin: 0 0 7px;
         }
 
         .subtitle {
           color: #d1d5db;
-          font-size: clamp(15px, 2vw, 22px);
-          margin: 0 0 14px;
+          font-size: clamp(14px, 2vw, 20px);
+          margin: 0 0 10px;
         }
 
         .green {
@@ -62,43 +62,53 @@ export default function HomePage() {
 
         .hosted {
           margin-bottom: 14px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
         }
 
         .hosted-label {
-          font-size: 10px;
-          letter-spacing: 3px;
+          font-size: 8px;
+          letter-spacing: 2.5px;
           color: #9ca3af;
           font-weight: 900;
-          margin-bottom: 6px;
+          margin-bottom: 4px;
         }
 
         .padelup {
-          width: 105px;
+          width: 90px;
           object-fit: contain;
           margin-bottom: 4px;
         }
 
         .location {
           color: #cbd5e1;
-          font-size: 12px;
+          font-size: 10px;
         }
 
         .cards {
           display: grid;
           grid-template-columns: repeat(2, 1fr);
-          gap: 16px;
+          gap: 14px;
           margin-top: 10px;
         }
 
         .card {
           position: relative;
           overflow: hidden;
-          border-radius: 24px;
-          min-height: 235px;
+          border-radius: 22px;
+          min-height: 210px;
           text-decoration: none;
           color: #ffffff;
           border: 1px solid rgba(74,222,128,0.35);
           box-shadow: 0 18px 50px rgba(0,0,0,0.42);
+          transition: transform 0.25s ease, border 0.25s ease, box-shadow 0.25s ease;
+        }
+
+        .card:hover {
+          transform: translateY(-4px);
+          border-color: rgba(74,222,128,0.85);
+          box-shadow: 0 24px 70px rgba(34,197,94,0.22);
         }
 
         .card img {
@@ -107,30 +117,25 @@ export default function HomePage() {
           width: 100%;
           height: 100%;
           object-fit: cover;
+          object-position: center;
           z-index: 0;
-        }
-
-        .mens-img {
-          object-position: left center;
-        }
-
-        .ladies-img {
-          object-position: right center;
         }
 
         .overlay {
           position: absolute;
           inset: 0;
           background:
-            linear-gradient(180deg, rgba(2,6,23,0.10) 0%, rgba(2,6,23,0.94) 82%);
+            linear-gradient(90deg, rgba(2,6,23,0.94) 0%, rgba(2,6,23,0.70) 45%, rgba(2,6,23,0.88) 100%),
+            linear-gradient(180deg, rgba(2,6,23,0.05) 0%, rgba(2,6,23,0.96) 100%);
+          backdrop-filter: blur(1px);
           z-index: 1;
         }
 
         .content {
           position: relative;
           z-index: 2;
-          min-height: 235px;
-          padding: 20px;
+          min-height: 210px;
+          padding: 17px;
           display: flex;
           flex-direction: column;
           justify-content: flex-end;
@@ -138,14 +143,14 @@ export default function HomePage() {
 
         .badge {
           width: fit-content;
-          padding: 6px 10px;
+          padding: 5px 9px;
           border-radius: 999px;
           background: rgba(74,222,128,0.14);
           border: 1px solid rgba(74,222,128,0.55);
           color: #86efac;
-          font-size: 11px;
+          font-size: 10px;
           font-weight: 900;
-          margin-bottom: 10px;
+          margin-bottom: 8px;
         }
 
         .purple {
@@ -155,152 +160,60 @@ export default function HomePage() {
         }
 
         .card-title {
-          font-size: clamp(25px, 4vw, 36px);
+          font-size: clamp(24px, 4vw, 34px);
           line-height: 1;
           font-weight: 900;
-          margin: 0 0 8px;
+          margin: 0 0 7px;
         }
 
         .card-text {
           color: #e5e7eb;
-          font-size: 14px;
-          line-height: 1.35;
-          margin: 0 0 14px;
+          font-size: 13px;
+          line-height: 1.3;
+          margin: 0 0 12px;
           max-width: 390px;
         }
 
         .button {
           width: fit-content;
-          padding: 10px 16px;
+          padding: 9px 14px;
           border-radius: 999px;
           background: #4ade80;
           color: #02140a;
           font-weight: 900;
-          font-size: 13px;
+          font-size: 12px;
+          box-shadow: 0 8px 30px rgba(74,222,128,0.35);
         }
 
         .button-purple {
           background: #c084fc;
           color: #190524;
-        }
-
-        .features {
-          margin-top: 16px;
-          display: flex;
-          justify-content: center;
-          flex-wrap: wrap;
-          gap: 9px;
-        }
-
-        .feature {
-          padding: 8px 12px;
-          border-radius: 999px;
-          background: rgba(255,255,255,0.06);
-          border: 1px solid rgba(255,255,255,0.10);
-          color: #d1d5db;
-          font-size: 13px;
-          font-weight: 800;
+          box-shadow: 0 8px 30px rgba(192,132,252,0.35);
         }
 
         @media (max-width: 640px) {
-          .page {
-            padding: 12px;
-          }
-
-          .hero {
-            padding: 4px 0 12px;
-          }
-
-          .main-logo {
-            width: 72px;
-            height: 72px;
-            border-radius: 16px;
-            margin-bottom: 10px;
-          }
-
-          .title {
-            font-size: 31px;
-            letter-spacing: -1px;
-            margin-bottom: 7px;
-          }
-
-          .subtitle {
-            font-size: 14px;
-            margin-bottom: 10px;
-          }
-
-          .hosted {
-            margin-bottom: 10px;
-          }
-
-          .hosted-label {
-            font-size: 8px;
-            letter-spacing: 2.5px;
-            margin-bottom: 4px;
-          }
-
-          .padelup {
-            width: 78px;
-          }
-
-          .location {
-            font-size: 10px;
-          }
-
           .cards {
             grid-template-columns: 1fr;
             gap: 10px;
-            margin-top: 6px;
           }
 
           .card {
-            min-height: 175px;
+            min-height: 185px;
             border-radius: 18px;
           }
 
           .content {
-            min-height: 175px;
-            padding: 16px;
-          }
-
-          .badge {
-            font-size: 10px;
-            padding: 5px 9px;
-            margin-bottom: 8px;
+            min-height: 185px;
+            padding: 15px;
           }
 
           .card-title {
-            font-size: 24px;
-            margin-bottom: 6px;
+            font-size: 25px;
           }
 
           .card-text {
             font-size: 12px;
-            line-height: 1.3;
             margin-bottom: 10px;
-          }
-
-          .button {
-            padding: 8px 13px;
-            font-size: 12px;
-          }
-
-          .features {
-            margin-top: 11px;
-            gap: 6px;
-          }
-
-          .feature {
-            padding: 6px 9px;
-            font-size: 11px;
-          }
-
-          .mens-img {
-            object-position: 30% center;
-          }
-
-          .ladies-img {
-            object-position: 72% center;
           }
         }
       `}</style>
@@ -327,12 +240,8 @@ export default function HomePage() {
         </section>
 
         <section className="cards">
-          <a href="/league?league=mens" className="card">
-            <img
-              src="/league-cards.jpg"
-              alt="Men / Mixed League"
-              className="mens-img"
-            />
+          <a href="/league?league=mens&division=1" className="card">
+            <img src="/mens-league.jpg" alt="Men / Mixed League" />
 
             <div className="overlay" />
 
@@ -349,12 +258,8 @@ export default function HomePage() {
             </div>
           </a>
 
-          <a href="/league?league=ladies" className="card">
-            <img
-              src="/league-cards.jpg"
-              alt="Ladies / Mixed League"
-              className="ladies-img"
-            />
+          <a href="/league?league=ladies&division=1" className="card">
+            <img src="/ladies-league.jpg" alt="Ladies / Mixed League" />
 
             <div className="overlay" />
 
@@ -371,12 +276,6 @@ export default function HomePage() {
             </div>
           </a>
         </section>
-
-        <div className="features">
-          <div className="feature">Fixtures</div>
-          <div className="feature">Results & Tables</div>
-          <div className="feature">Payments</div>
-        </div>
       </div>
     </main>
   );
