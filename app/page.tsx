@@ -29,39 +29,52 @@ export default function HomePage() {
 
         .hero {
           text-align: center;
-          padding: 4px 0 12px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          padding: 4px 0 10px;
         }
 
         .main-logo {
-          width: 76px;
-          height: 76px;
+          width: 68px;
+          height: 68px;
           object-fit: cover;
           border-radius: 16px;
           background: #ffffff;
-          margin-bottom: 10px;
-          box-shadow: 0 18px 50px rgba(0,0,0,0.42);
+          margin-bottom: 14px;
+          box-shadow:
+            0 0 30px rgba(74,222,128,0.12),
+            0 18px 50px rgba(0,0,0,0.42);
         }
 
         .title {
           font-size: clamp(31px, 6vw, 62px);
           font-weight: 900;
-          line-height: 0.98;
+          line-height: 0.92;
           letter-spacing: -1px;
-          margin: 0 0 7px;
+          margin: 0 0 8px;
         }
 
         .subtitle {
           color: #d1d5db;
           font-size: clamp(14px, 2vw, 20px);
-          margin: 0 0 10px;
+          margin: 0 0 12px;
         }
 
         .green {
           color: #4ade80;
         }
 
-        .hosted {
+        .stats {
+          text-align: center;
+          color: #9ca3af;
+          font-size: 13px;
+          font-weight: 600;
           margin-bottom: 14px;
+        }
+
+        .hosted {
+          margin-bottom: 10px;
           display: flex;
           flex-direction: column;
           align-items: center;
@@ -76,14 +89,14 @@ export default function HomePage() {
         }
 
         .padelup {
-          width: 90px;
+          width: 95px;
           object-fit: contain;
-          margin-bottom: 4px;
+          margin-bottom: 6px;
         }
 
         .location {
           color: #cbd5e1;
-          font-size: 10px;
+          font-size: 11px;
         }
 
         .cards {
@@ -102,7 +115,11 @@ export default function HomePage() {
           color: #ffffff;
           border: 1px solid rgba(74,222,128,0.35);
           box-shadow: 0 18px 50px rgba(0,0,0,0.42);
-          transition: transform 0.25s ease, border 0.25s ease, box-shadow 0.25s ease;
+          transition:
+            transform 0.25s ease,
+            border 0.25s ease,
+            box-shadow 0.25s ease;
+          backdrop-filter: blur(12px);
         }
 
         .card:hover {
@@ -117,17 +134,34 @@ export default function HomePage() {
           width: 100%;
           height: 100%;
           object-fit: cover;
-          object-position: center;
           z-index: 0;
+        }
+
+        .mens-img {
+          object-position: 18% center;
+        }
+
+        .ladies-img {
+          object-position: 82% center;
         }
 
         .overlay {
           position: absolute;
           inset: 0;
           background:
-            linear-gradient(90deg, rgba(2,6,23,0.94) 0%, rgba(2,6,23,0.70) 45%, rgba(2,6,23,0.88) 100%),
-            linear-gradient(180deg, rgba(2,6,23,0.05) 0%, rgba(2,6,23,0.96) 100%);
-          backdrop-filter: blur(1px);
+            linear-gradient(
+              90deg,
+              rgba(2,6,23,0.92) 0%,
+              rgba(2,6,23,0.62) 45%,
+              rgba(2,6,23,0.86) 100%
+            ),
+            linear-gradient(
+              180deg,
+              rgba(2,6,23,0.05) 0%,
+              rgba(2,6,23,0.92) 100%
+            );
+
+          backdrop-filter: blur(2px);
           z-index: 1;
         }
 
@@ -143,14 +177,14 @@ export default function HomePage() {
 
         .badge {
           width: fit-content;
-          padding: 5px 9px;
+          padding: 5px 10px;
           border-radius: 999px;
           background: rgba(74,222,128,0.14);
           border: 1px solid rgba(74,222,128,0.55);
           color: #86efac;
           font-size: 10px;
           font-weight: 900;
-          margin-bottom: 8px;
+          margin-bottom: 10px;
         }
 
         .purple {
@@ -163,26 +197,31 @@ export default function HomePage() {
           font-size: clamp(24px, 4vw, 34px);
           line-height: 1;
           font-weight: 900;
-          margin: 0 0 7px;
+          margin: 0 0 8px;
         }
 
         .card-text {
           color: #e5e7eb;
           font-size: 13px;
-          line-height: 1.3;
-          margin: 0 0 12px;
+          line-height: 1.35;
+          margin: 0 0 14px;
           max-width: 390px;
         }
 
         .button {
           width: fit-content;
-          padding: 9px 14px;
+          padding: 10px 16px;
           border-radius: 999px;
           background: #4ade80;
           color: #02140a;
           font-weight: 900;
-          font-size: 12px;
+          font-size: 13px;
           box-shadow: 0 8px 30px rgba(74,222,128,0.35);
+          transition: transform 0.2s ease;
+        }
+
+        .button:active {
+          transform: scale(0.96);
         }
 
         .button-purple {
@@ -192,19 +231,23 @@ export default function HomePage() {
         }
 
         @media (max-width: 640px) {
+          .page {
+            padding: 12px;
+          }
+
           .cards {
             grid-template-columns: 1fr;
-            gap: 10px;
+            gap: 12px;
           }
 
           .card {
             min-height: 185px;
-            border-radius: 18px;
+            border-radius: 20px;
           }
 
           .content {
             min-height: 185px;
-            padding: 15px;
+            padding: 16px;
           }
 
           .card-title {
@@ -213,7 +256,12 @@ export default function HomePage() {
 
           .card-text {
             font-size: 12px;
-            margin-bottom: 10px;
+            margin-bottom: 12px;
+          }
+
+          .button {
+            padding: 9px 15px;
+            font-size: 12px;
           }
         }
       `}</style>
@@ -232,16 +280,30 @@ export default function HomePage() {
             Competitive. Social. <span className="green">Community.</span>
           </p>
 
+          <div className="stats">
+            9 Divisions • 100+ Players • Weekly Fixtures
+          </div>
+
           <div className="hosted">
             <div className="hosted-label">HOSTED AT</div>
-            <img src="/padelup.png" alt="Padel Up" className="padelup" />
+
+            <img
+              src="/padelup.png"
+              alt="Padel Up"
+              className="padelup"
+            />
+
             <div className="location">Stockton-on-Tees</div>
           </div>
         </section>
 
         <section className="cards">
           <a href="/league?league=mens&division=1" className="card">
-            <img src="/mens-league.jpg" alt="Men / Mixed League" />
+            <img
+              src="/league-cards.jpg"
+              alt="Men / Mixed League"
+              className="mens-img"
+            />
 
             <div className="overlay" />
 
@@ -258,8 +320,12 @@ export default function HomePage() {
             </div>
           </a>
 
-          <a href="/league?league=ladies&division=1" className="card">
-            <img src="/ladies-league.jpg" alt="Ladies / Mixed League" />
+          <a href="/league?league=ladies&division=7" className="card">
+            <img
+              src="/league-cards.jpg"
+              alt="Ladies / Mixed League"
+              className="ladies-img"
+            />
 
             <div className="overlay" />
 
@@ -272,7 +338,9 @@ export default function HomePage() {
                 Fun, social and competitive. Join the growing community.
               </p>
 
-              <div className="button button-purple">View League →</div>
+              <div className="button button-purple">
+                View League →
+              </div>
             </div>
           </a>
         </section>
