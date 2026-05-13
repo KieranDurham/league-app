@@ -4,6 +4,50 @@ import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
+async function addFixture(formData: FormData) {
+  "use server";
+
+  const divisionId = Number(formData.get("division_id"));
+  const round = Number(formData.get("round"));
+  const homeTeamId = Number(formData.get("home_team_id"));
+  const awayTeamId = Number(formData.get("away_team_id"));
+  const fixtureDay = String(formData.get("fixture_day") || "").trim();
+  const fixtureTime = String(formData.get("fixture_time") || "").trim();
+  const isPrivateGame = formData.get("is_private_game") === "on";
+
+  if (!divisionId || !round || !homeTeamId || !awayTeamId) {
+    redirect(`/?division=${divisionId}&admin=true`);
+  }
+
+  if (homeTeamId === awayTeamId) {
+    redirect(`/?division=${divisionId}&admin=true`);
+  }
+
+  await supabase.from("fixtures").insert({
+    division_id: divisionId,
+    round,
+    home_team_id: homeTeamId,
+    away_team_id: awayTeamId,
+    fixture_day: fixtureDay,
+    fixture_time: fixtureTime,
+    is_private_game: isPrivateGame,
+    played: false,
+    home_score: 0,
+    away_score: 0,
+    home_set1: null,
+    away_set1: null,
+    home_set2: null,
+    away_set2: null,
+    home_set3: null,
+    away_set3: null,
+  });
+
+  revalidatePath("/");
+  revalidatePath("/summary");
+
+  redirect(`/?division=${divisionId}&admin=true#fixtures`);
+}
+
 async function togglePrivateGame(formData: FormData) {
   "use server";
 
@@ -100,7 +144,8 @@ export default async function Home({
   const { data: teams } = await supabase
     .from("teams")
     .select("*")
-    .eq("division_id", selectedDivisionId);
+    .eq("division_id", selectedDivisionId)
+    .order("name", { ascending: true });
 
   const { data: fixtures } = await supabase
     .from("fixtures")
@@ -294,6 +339,18 @@ export default async function Home({
     fontSize: "16px",
     color: "#000000",
     background: "#ffffff",
+    boxSizing: "border-box" as const,
+  };
+
+  const selectStyle = {
+    width: "100%",
+    padding: "10px",
+    border: "1px solid #999",
+    borderRadius: "6px",
+    fontSize: "16px",
+    color: "#000000",
+    background: "#ffffff",
+    boxSizing: "border-box" as const,
   };
 
   return (
@@ -555,7 +612,190 @@ export default async function Home({
         </table>
       </div>
 
-      <h2 style={{ marginTop: "20px", color: "#000000" }}>Fixtures</h2>
+      <h2 id="fixtures" style={{ marginTop: "20px", color: "#000000" }}>
+        Fixtures
+      </h2>
+
+      {isAdmin && (
+        <div
+          style={{
+            background: "#ffffff",
+            border: `2px solid ${primary}`,
+            borderRadius: "12px",
+            padding: "14px",
+            marginBottom: "20px",
+            boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
+          }}
+        >
+          <h3
+            style={{
+              marginTop: 0,
+              marginBottom: "12px",
+              color: "#000000",
+            }}
+          >
+            Add Fixture
+          </h3>
+
+          <form action={addFixture}>
+            <input
+              type="hidden"
+              name="division_id"
+              value={selectedDivisionId}
+            />
+
+            <div style={{ marginBottom: "10px" }}>
+              <label
+                style={{
+                  display: "block",
+                  fontSize: "13px",
+                  fontWeight: "bold",
+                  marginBottom: "4px",
+                  color: "#222222",
+                }}
+              >
+                Round
+              </label>
+
+              <input
+                name="round"
+                type="number"
+                required
+                placeholder="Example: 7"
+                style={inputStyle}
+              />
+            </div>
+
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr",
+                gap: "10px",
+                marginBottom: "10px",
+              }}
+            >
+              <div>
+                <label
+                  style={{
+                    display: "block",
+                    fontSize: "13px",
+                    fontWeight: "bold",
+                    marginBottom: "4px",
+                    color: "#222222",
+                  }}
+                >
+                  Day
+                </label>
+
+                <input
+                  name="fixture_day"
+                  type="text"
+                  placeholder="Example: Monday"
+                  style={inputStyle}
+                />
+              </div>
+
+              <div>
+                <label
+                  style={{
+                    display: "block",
+                    fontSize: "13px",
+                    fontWeight: "bold",
+                    marginBottom: "4px",
+                    color: "#222222",
+                  }}
+                >
+                  Time
+                </label>
+
+                <input
+                  name="fixture_time"
+                  type="text"
+                  placeholder="Example: 19:00"
+                  style={inputStyle}
+                />
+              </div>
+            </div>
+
+            <div style={{ marginBottom: "10px" }}>
+              <label
+                style={{
+                  display: "block",
+                  fontSize: "13px",
+                  fontWeight: "bold",
+                  marginBottom: "4px",
+                  color: "#222222",
+                }}
+              >
+                Home Team
+              </label>
+
+              <select name="home_team_id" required style={selectStyle}>
+                <option value="">Select home team</option>
+                {teams?.map((team: any) => (
+                  <option key={team.id} value={team.id}>
+                    {team.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div style={{ marginBottom: "10px" }}>
+              <label
+                style={{
+                  display: "block",
+                  fontSize: "13px",
+                  fontWeight: "bold",
+                  marginBottom: "4px",
+                  color: "#222222",
+                }}
+              >
+                Away Team
+              </label>
+
+              <select name="away_team_id" required style={selectStyle}>
+                <option value="">Select away team</option>
+                {teams?.map((team: any) => (
+                  <option key={team.id} value={team.id}>
+                    {team.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <label
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+                marginBottom: "12px",
+                fontWeight: "bold",
+                color: "#222222",
+              }}
+            >
+              <input name="is_private_game" type="checkbox" />
+              Private game - no payment required
+            </label>
+
+            <button
+              type="submit"
+              style={{
+                width: "100%",
+                background: primary,
+                color: textColor,
+                padding: "12px",
+                borderRadius: "8px",
+                border: "none",
+                fontWeight: "bold",
+                fontSize: "16px",
+                cursor: "pointer",
+              }}
+            >
+              Create Fixture
+            </button>
+          </form>
+        </div>
+      )}
 
       {fixturesWithPayments.length === 0 && (
         <p style={{ color: "#222222", fontWeight: "500" }}>
@@ -608,6 +848,25 @@ export default async function Home({
                   color: "#000000",
                 }}
               >
+                {(fixture.fixture_day || fixture.fixture_time) && (
+                  <div
+                    style={{
+                      textAlign: "center",
+                      background: "#f3f4f6",
+                      color: "#111827",
+                      padding: "8px",
+                      borderRadius: "8px",
+                      marginBottom: "10px",
+                      fontWeight: "bold",
+                      fontSize: "14px",
+                    }}
+                  >
+                    {fixture.fixture_day}
+                    {fixture.fixture_day && fixture.fixture_time ? " · " : ""}
+                    {fixture.fixture_time}
+                  </div>
+                )}
+
                 <div
                   style={{
                     display: "grid",
