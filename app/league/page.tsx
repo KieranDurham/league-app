@@ -1316,8 +1316,6 @@ fontSize: "14px",
   textColor={textColor}
   getInitials={getInitials}
 />
-                      />
-
                       <div
                         style={{
                           background: "#d1d5db",
@@ -1325,7 +1323,6 @@ fontSize: "14px",
                           minHeight: "180px",
                         }}
                       />
-
 <PaymentColumn
   payments={awayPayments}
   fixture={fixture}
@@ -1336,7 +1333,6 @@ fontSize: "14px",
   textColor={textColor}
   getInitials={getInitials}
 />
-                      />
                     </div>
                   ) : (
                     <p
