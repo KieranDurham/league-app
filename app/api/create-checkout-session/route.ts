@@ -20,40 +20,47 @@ export async function POST(req: Request) {
 
     const currentPaymentId = paymentIds[0];
 
-    const { data: currentPayment } = await supabase
+    const { data: currentPayment, error: currentPaymentError } = await supabase
       .from("fixture_payments")
       .select("*, fixtures(*)")
       .eq("id", currentPaymentId)
       .single();
 
+    if (currentPaymentError || !currentPayment) {
+      console.error("Current payment lookup error:", currentPaymentError);
+      return new NextResponse("Payment record not found", { status: 404 });
+    }
+
     let nextPaymentId = "";
 
-    if (currentPayment) {
-      const currentRound = Number(currentPayment.fixtures?.round || 0);
-      const divisionId = Number(currentPayment.fixtures?.division_id || 0);
+    const currentRound = Number(currentPayment.fixtures?.round || 0);
+    const divisionId = Number(currentPayment.fixtures?.division_id || 0);
 
-      const { data: nextPayments } = await supabase
-        .from("fixture_payments")
-        .select("*, fixtures(*)")
-        .eq("player_name", currentPayment.player_name)
-        .eq("team_id", currentPayment.team_id)
-        .eq("status", "unpaid");
+    const { data: nextPayments, error: nextPaymentsError } = await supabase
+      .from("fixture_payments")
+      .select("*, fixtures(*)")
+      .eq("player_name", currentPayment.player_name)
+      .eq("team_id", currentPayment.team_id)
+      .eq("status", "unpaid");
 
-      const nextPayment = nextPayments
-        ?.filter(
-          (payment: any) =>
-            Number(payment.id) !== Number(currentPaymentId) &&
-            Number(payment.fixtures?.division_id) === divisionId &&
-            Number(payment.fixtures?.round) > currentRound
-        )
-        .sort(
-          (a: any, b: any) =>
-            Number(a.fixtures?.round) - Number(b.fixtures?.round)
-        )[0];
+    if (nextPaymentsError) {
+      console.error("Next payment lookup error:", nextPaymentsError);
+    }
 
-      if (nextPayment) {
-        nextPaymentId = String(nextPayment.id);
-      }
+    const nextPayment = nextPayments
+      ?.filter(
+        (payment: any) =>
+          Number(payment.id) !== Number(currentPaymentId) &&
+          Number(payment.fixtures?.division_id) === divisionId &&
+          Number(payment.fixtures?.round) > currentRound
+      )
+      .sort(
+        (a: any, b: any) =>
+          Number(a.fixtures?.round) - Number(b.fixtures?.round)
+      )[0];
+
+    if (nextPayment) {
+      nextPaymentId = String(nextPayment.id);
     }
 
     const session = await stripe.checkout.sessions.create({
@@ -65,16 +72,23 @@ export async function POST(req: Request) {
           price_data: {
             currency: "gbp",
             product_data: {
-              name: "Match Fee - select 1 or 2 rounds",
+              name: nextPaymentId
+                ? "Match Fee - select 1 or 2 rounds"
+                : "Match Fee",
             },
             unit_amount: 1100,
           },
           quantity: 1,
-          adjustable_quantity: {
-            enabled: true,
-            minimum: 1,
-            maximum: nextPaymentId ? 2 : 1,
-          },
+
+          ...(nextPaymentId
+            ? {
+                adjustable_quantity: {
+                  enabled: true,
+                  minimum: 1,
+                  maximum: 2,
+                },
+              }
+            : {}),
         },
       ],
 
