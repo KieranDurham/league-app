@@ -1306,7 +1306,7 @@ fontSize: "14px",
                         overflow: "hidden",
                       }}
                     >
-<PaymentColumn
+
   payments={homePayments}
   fixture={fixture}
   allFixtures={fixturesWithPayments}
@@ -1324,384 +1324,376 @@ fontSize: "14px",
     minHeight: "180px",
   }}
 />
-<PaymentColumn
-  payments={homePayments}
-  fixture={fixture}
-  allFixtures={fixturesWithPayments}
-  side="A"
-  align="left"
-  primary={primary}
-  textColor={textColor}
-  getInitials={getInitials}
+<<PaymentColumn
+payments={homePayments}
+fixture={fixture}
+allFixtures={fixturesWithPayments}
+side="A"
+align="left"
+primary={primary}
+textColor={textColor}
+getInitials={getInitials}
 />
 
 <div
-  style={{
-    background: "#d1d5db",
-    width: "1px",
-    minHeight: "180px",
-  }}
+style={{
+background: "#d1d5db",
+width: "1px",
+minHeight: "180px",
+}}
 />
+
 <PaymentColumn
-  payments={awayPayments}
-  fixture={fixture}
-  allFixtures={fixturesWithPayments}
-  side="B"
-  align="right"
-  primary={primary}
-  textColor={textColor}
-  getInitials={getInitials}
+payments={awayPayments}
+fixture={fixture}
+allFixtures={fixturesWithPayments}
+side="B"
+align="right"
+primary={primary}
+textColor={textColor}
+getInitials={getInitials}
 />
-                      <div
-                        style={{
-                          background: "#d1d5db",
-                          width: "1px",
-                          minHeight: "180px",
-                        }}
-                      />
-<PaymentColumn
-  payments={awayPayments}
-  fixture={fixture}
-  allFixtures={fixturesWithPayments}
-  side="B"
-  align="right"
-  primary={primary}
-  textColor={textColor}
-  getInitials={getInitials}
+</div>
+) : (
+<p
+style={{
+margin: 0,
+color: "#555555",
+fontSize: "13px",
+}}
+>
+No payment records found for this fixture.
+</p>
+)}
+</div>
+
+{fixture.played && (
+<div
+style={{
+textAlign: "center",
+fontSize: "13px",
+color: "#333333",
+marginBottom: "10px",
+fontWeight: "500",
+}}
+>
+{fixture.home_set1}-{fixture.away_set1} |{" "}
+{fixture.home_set2}-{fixture.away_set2}
+{showThirdSet && (
+<>
+{" "}
+| {fixture.home_set3}-{fixture.away_set3}
+</>
+)}
+</div>
+)}
+
+{isAdmin && !fixture.played && (
+<form action={submitScore} style={{ marginTop: "10px" }}>
+<input type="hidden" name="fixture_id" value={fixture.id} />
+<input
+type="hidden"
+name="division_id"
+value={selectedDivisionId}
 />
-                    </div>
-                  ) : (
-                    <p
-                      style={{
-                        margin: 0,
-                        color: "#555555",
-                        fontSize: "13px",
-                      }}
-                    >
-                      No payment records found for this fixture.
-                    </p>
-                  )}
-                </div>
+<input
+type="hidden"
+name="league_type"
+value={selectedLeague}
+/>
 
-                {fixture.played && (
-                  <div
-                    style={{
-                      textAlign: "center",
-                      fontSize: "13px",
-                      color: "#333333",
-                      marginBottom: "10px",
-                      fontWeight: "500",
-                    }}
-                  >
-                    {fixture.home_set1}-{fixture.away_set1} |{" "}
-                    {fixture.home_set2}-{fixture.away_set2}
-                    {showThirdSet && (
-                      <>
-                        {" "}
-                        | {fixture.home_set3}-{fixture.away_set3}
-                      </>
-                    )}
-                  </div>
-                )}
+{[1, 2].map((set) => (
+<div key={set} style={{ marginBottom: "8px" }}>
+<div
+style={{
+fontSize: "13px",
+fontWeight: "bold",
+color: "#222222",
+marginBottom: "4px",
+}}
+>
+Set {set}
+</div>
 
-                {isAdmin && !fixture.played && (
-                  <form action={submitScore} style={{ marginTop: "10px" }}>
-                    <input type="hidden" name="fixture_id" value={fixture.id} />
-                    <input
-                      type="hidden"
-                      name="division_id"
-                      value={selectedDivisionId}
-                    />
-                    <input
-                      type="hidden"
-                      name="league_type"
-                      value={selectedLeague}
-                    />
+<div style={{ display: "flex", gap: "8px" }}>
+<input
+name={`home_set${set}`}
+type="number"
+placeholder="Home"
+required
+style={inputStyle}
+/>
 
-                    {[1, 2].map((set) => (
-                      <div key={set} style={{ marginBottom: "8px" }}>
-                        <div
-                          style={{
-                            fontSize: "13px",
-                            fontWeight: "bold",
-                            color: "#222222",
-                            marginBottom: "4px",
-                          }}
-                        >
-                          Set {set}
-                        </div>
+<input
+name={`away_set${set}`}
+type="number"
+placeholder="Away"
+required
+style={inputStyle}
+/>
+</div>
+</div>
+))}
 
-                        <div style={{ display: "flex", gap: "8px" }}>
-                          <input
-                            name={`home_set${set}`}
-                            type="number"
-                            placeholder="Home"
-                            required
-                            style={inputStyle}
-                          />
+<div style={{ marginBottom: "8px" }}>
+<div
+style={{
+fontSize: "13px",
+fontWeight: "bold",
+color: "#222222",
+marginBottom: "4px",
+}}
+>
+Set 3 Decider Only
+</div>
 
-                          <input
-                            name={`away_set${set}`}
-                            type="number"
-                            placeholder="Away"
-                            required
-                            style={inputStyle}
-                          />
-                        </div>
-                      </div>
-                    ))}
+<div style={{ display: "flex", gap: "8px" }}>
+<input
+name="home_set3"
+type="number"
+placeholder="Home"
+style={inputStyle}
+/>
 
-                    <div style={{ marginBottom: "8px" }}>
-                      <div
-                        style={{
-                          fontSize: "13px",
-                          fontWeight: "bold",
-                          color: "#222222",
-                          marginBottom: "4px",
-                        }}
-                      >
-                        Set 3 Decider Only
-                      </div>
+<input
+name="away_set3"
+type="number"
+placeholder="Away"
+style={inputStyle}
+/>
+</div>
+</div>
 
-                      <div style={{ display: "flex", gap: "8px" }}>
-                        <input
-                          name="home_set3"
-                          type="number"
-                          placeholder="Home"
-                          style={inputStyle}
-                        />
+<button
+type="submit"
+style={{
+width: "100%",
+background: primary,
+color: textColor,
+padding: "12px",
+borderRadius: "8px",
+border: "none",
+marginTop: "6px",
+fontWeight: "bold",
+fontSize: "16px",
+}}
+>
+Save Result
+</button>
+</form>
+)}
 
-                        <input
-                          name="away_set3"
-                          type="number"
-                          placeholder="Away"
-                          style={inputStyle}
-                        />
-                      </div>
-                    </div>
+{fixture.played && (
+<div
+style={{
+textAlign: "center",
+color: primary,
+fontWeight: "bold",
+marginTop: "8px",
+}}
+>
+Result submitted
+</div>
+)}
 
-                    <button
-                      type="submit"
-                      style={{
-                        width: "100%",
-                        background: primary,
-                        color: textColor,
-                        padding: "12px",
-                        borderRadius: "8px",
-                        border: "none",
-                        marginTop: "6px",
-                        fontWeight: "bold",
-                        fontSize: "16px",
-                      }}
-                    >
-                      Save Result
-                    </button>
-                  </form>
-                )}
+{isAdmin && fixture.played && (
+<form action={resetScore} style={{ marginTop: "10px" }}>
+<input type="hidden" name="fixture_id" value={fixture.id} />
+<input
+type="hidden"
+name="division_id"
+value={selectedDivisionId}
+/>
+<input
+type="hidden"
+name="league_type"
+value={selectedLeague}
+/>
 
-                {fixture.played && (
-                  <div
-                    style={{
-                      textAlign: "center",
-                      color: primary,
-                      fontWeight: "bold",
-                      marginTop: "8px",
-                    }}
-                  >
-                    Result submitted
-                  </div>
-                )}
+<button
+type="submit"
+style={{
+width: "100%",
+background: "#b91c1c",
+color: "#ffffff",
+padding: "12px",
+borderRadius: "8px",
+border: "none",
+marginTop: "6px",
+fontWeight: "bold",
+fontSize: "16px",
+cursor: "pointer",
+}}
+>
+Reset Result
+</button>
+</form>
+)}
+</div>
+);
+})}
 
-                {isAdmin && fixture.played && (
-                  <form action={resetScore} style={{ marginTop: "10px" }}>
-                    <input type="hidden" name="fixture_id" value={fixture.id} />
-                    <input
-                      type="hidden"
-                      name="division_id"
-                      value={selectedDivisionId}
-                    />
-                    <input
-                      type="hidden"
-                      name="league_type"
-                      value={selectedLeague}
-                    />
-
-                    <button
-                      type="submit"
-                      style={{
-                        width: "100%",
-                        background: "#b91c1c",
-                        color: "#ffffff",
-                        padding: "12px",
-                        borderRadius: "8px",
-                        border: "none",
-                        marginTop: "6px",
-                        fontWeight: "bold",
-                        fontSize: "16px",
-                        cursor: "pointer",
-                      }}
-                    >
-                      Reset Result
-                    </button>
-                  </form>
-                )}
-              </div>
-            );
-          })}
-
-          <div style={{ textAlign: "center", margin: "14px 0 22px" }}>
-            <a
-              href="#top"
-              style={{
-                display: "inline-block",
-                background: "#eeeeee",
-                color: "#000000",
-                padding: "9px 14px",
-                borderRadius: "999px",
-                textDecoration: "none",
-                fontWeight: "bold",
-                border: "1px solid #dddddd",
-              }}
-            >
-              ↑ Back to top
-            </a>
-          </div>
-        </div>
-      ))}
-    </main>
-  );
+<div style={{ textAlign: "center", margin: "14px 0 22px" }}>
+<a
+href="#top"
+style={{
+display: "inline-block",
+background: "#eeeeee",
+color: "#000000",
+padding: "9px 14px",
+borderRadius: "999px",
+textDecoration: "none",
+fontWeight: "bold",
+border: "1px solid #dddddd",
+}}
+>
+↑ Back to top
+</a>
+</div>
+</div>
+))}
+</main>
+);
 }
 
 function PaymentColumn({
-  payments,
-  fixture,
-  allFixtures,
-  side,
-  align,
-  primary,
-  textColor,
-  getInitials,
+payments,
+fixture,
+allFixtures,
+side,
+align,
+primary,
+textColor,
+getInitials,
 }: any) {
-  return (
-    <div
-      style={{
-        display: "grid",
-        gridTemplateColumns: "minmax(0,1fr) minmax(0,1fr)",
-        gap: "6px",
-        textAlign: "center",
-        width: "100%",
-        minWidth: 0,
-        overflow: "hidden",
-      }}
-    >
-      {payments.map((payment: any) => {
-        const amountDue = Number(payment.amount_due || 0);
-        const amountPaid = Number(payment.amount_paid || 0);
-        const remaining = amountDue - amountPaid;
-        const isPaid = remaining <= 0;
+return (
+<div
+style={{
+display: "flex",
+justifyContent: "space-around",
+gap: "12px",
+textAlign: "center",
+width: "100%",
+minWidth: 0,
+overflow: "hidden",
+flexWrap: "wrap",
+}}
+>
+{payments.map((payment: any) => {
+const amountDue = Number(payment.amount_due || 0);
+const amountPaid = Number(payment.amount_paid || 0);
+const remaining = amountDue - amountPaid;
+const isPaid = remaining <= 0;
 
-        return (
-          <div key={payment.id} style={{ minWidth: 0, maxWidth: "100%" }}>
-            <div
-              style={{
-                width: "52px",
-                height: "52px",
-                borderRadius: "50%",
-                background: "#12202f",
-                color: "#ffffff",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                margin: "0 auto 8px",
-                fontSize: "18px",
-                fontWeight: "500",
-              }}
-            >
-              {getInitials(payment.player_name)}
-            </div>
+return (
+<div
+key={payment.id}
+style={{
+minWidth: "90px",
+maxWidth: "120px",
+flex: "1 1 90px",
+}}
+>
+<div
+style={{
+width: "52px",
+height: "52px",
+borderRadius: "50%",
+background: "#12202f",
+color: "#ffffff",
+display: "flex",
+alignItems: "center",
+justifyContent: "center",
+margin: "0 auto 8px",
+fontSize: "18px",
+fontWeight: "500",
+}}
+>
+{getInitials(payment.player_name)}
+</div>
 
-            <div
-              style={{
-                fontSize: "13px",
-                fontWeight: "600",
-                color: "#12202f",
-                whiteSpace: "nowrap",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-              }}
-            >
-              {payment.player_name}
-            </div>
+<div
+style={{
+fontSize: "13px",
+fontWeight: "600",
+color: "#12202f",
+whiteSpace: "nowrap",
+overflow: "hidden",
+textOverflow: "ellipsis",
+}}
+>
+{payment.player_name}
+</div>
 
-            {!fixture.is_private_game && (
-              <div
-                style={{
-                  display: "inline-block",
-                  background: "#caff3d",
-                  padding: "3px 8px",
-                  borderRadius: "999px",
-                  marginTop: "6px",
-                  fontWeight: "bold",
-                  fontSize: "13px",
-                  color: "#12202f",
-                }}
-              >
-                £{amountDue}
-              </div>
-            )}
+{!fixture.is_private_game && (
+<div
+style={{
+display: "inline-block",
+background: "#caff3d",
+padding: "3px 8px",
+borderRadius: "999px",
+marginTop: "6px",
+fontWeight: "bold",
+fontSize: "13px",
+color: "#12202f",
+}}
+>
+£{amountDue}
+</div>
+)}
 
-            {fixture.is_private_game ? (
-              <div
-                style={{
-                  marginTop: "10px",
-                  fontSize: "12px",
-                  fontWeight: "bold",
-                  color: "#166534",
-                }}
-              >
-                No payment required
-              </div>
-            ) : (
-              <>
-                <div
-                  style={{
-                    marginTop: "10px",
-                    fontSize: "13px",
-                    fontWeight: "bold",
-                    color: isPaid ? "#12202f" : "#cc0000",
-                  }}
-                >
-                  {isPaid ? "Paid" : "Not paid"}
-                </div>
+{fixture.is_private_game ? (
+<div
+style={{
+marginTop: "10px",
+fontSize: "12px",
+fontWeight: "bold",
+color: "#166534",
+}}
+>
+No payment required
+</div>
+) : (
+<>
+<div
+style={{
+marginTop: "10px",
+fontSize: "13px",
+fontWeight: "bold",
+color: isPaid ? "#12202f" : "#cc0000",
+}}
+>
+{isPaid ? "Paid" : "Not paid"}
+</div>
 
-                {isPaid ? (
-                  <div style={{ fontSize: "24px", marginTop: "6px" }}>🪙</div>
-                ) : (
-                  <PaymentButton
-                    payment={payment}
-                    allFixtures={allFixtures}
-                    primary={primary}
-                    textColor={textColor}
-                  />
-                )}
-              </>
-            )}
-          </div>
-        );
-      })}
+{isPaid ? (
+<div style={{ fontSize: "24px", marginTop: "6px" }}>🪙</div>
+) : (
+<PaymentButton
+payment={payment}
+allFixtures={allFixtures}
+primary={primary}
+textColor={textColor}
+/>
+)}
+</>
+)}
+</div>
+);
+})}
 
-      <div
-        style={{
-          gridColumn: "1 / -1",
-          textAlign: align,
-          fontSize: "22px",
-          fontWeight: "bold",
-          color: "#6b7280",
-          marginTop: "10px",
-        }}
-      >
-        {side}
-      </div>
-    </div>
-  );
+<div
+style={{
+width: "100%",
+textAlign: align,
+fontSize: "22px",
+fontWeight: "bold",
+color: "#6b7280",
+marginTop: "10px",
+}}
+>
+{side}
+</div>
+</div>
+);
 }
