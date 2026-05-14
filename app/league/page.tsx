@@ -1,6 +1,7 @@
 import { supabase } from "@/lib/supabase";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import PaymentButton from "./PaymentButton";
 
 export const dynamic = "force-dynamic";
 
@@ -1305,14 +1306,16 @@ fontSize: "14px",
                         overflow: "hidden",
                       }}
                     >
-                      <PaymentColumn
-                        payments={homePayments}
-                        fixture={fixture}
-                        side="A"
-                        align="left"
-                        primary={primary}
-                        textColor={textColor}
-                        getInitials={getInitials}
+<PaymentColumn
+  payments={homePayments}
+  fixture={fixture}
+  allFixtures={fixturesWithPayments}
+  side="A"
+  align="left"
+  primary={primary}
+  textColor={textColor}
+  getInitials={getInitials}
+/>
                       />
 
                       <div
@@ -1323,14 +1326,16 @@ fontSize: "14px",
                         }}
                       />
 
-                      <PaymentColumn
-                        payments={awayPayments}
-                        fixture={fixture}
-                        side="B"
-                        align="right"
-                        primary={primary}
-                        textColor={textColor}
-                        getInitials={getInitials}
+<PaymentColumn
+  payments={awayPayments}
+  fixture={fixture}
+  allFixtures={fixturesWithPayments}
+  side="B"
+  align="right"
+  primary={primary}
+  textColor={textColor}
+  getInitials={getInitials}
+/>
                       />
                     </div>
                   ) : (
@@ -1563,22 +1568,6 @@ function PaymentColumn({
         const remaining = amountDue - amountPaid;
         const isPaid = remaining <= 0;
 
-        const selectablePayments =
-          allFixtures
-            ?.flatMap((f: any) =>
-              (f.fixture_payments || []).map((p: any) => ({
-                ...p,
-                round: f.round,
-              }))
-            )
-            .filter(
-              (p: any) =>
-                p.player_name === payment.player_name &&
-                Number(p.team_id) === Number(payment.team_id) &&
-                p.status !== "paid"
-            )
-            .sort((a: any, b: any) => Number(a.round) - Number(b.round)) || [];
-
         return (
           <div key={payment.id} style={{ minWidth: 0, maxWidth: "100%" }}>
             <div
@@ -1630,7 +1619,14 @@ function PaymentColumn({
             )}
 
             {fixture.is_private_game ? (
-              <div style={{ marginTop: "10px", fontSize: "12px", fontWeight: "bold", color: "#166534" }}>
+              <div
+                style={{
+                  marginTop: "10px",
+                  fontSize: "12px",
+                  fontWeight: "bold",
+                  color: "#166534",
+                }}
+              >
                 No payment required
               </div>
             ) : (
@@ -1649,58 +1645,12 @@ function PaymentColumn({
                 {isPaid ? (
                   <div style={{ fontSize: "24px", marginTop: "6px" }}>🪙</div>
                 ) : (
-                  <form action="/api/create-checkout-session" method="POST">
-                    <div
-                      style={{
-                        marginTop: "10px",
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: "6px",
-                        alignItems: "center",
-                      }}
-                    >
-                      {selectablePayments.map((p: any) => (
-                        <label
-                          key={p.id}
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "6px",
-                            fontSize: "12px",
-                            color: "#111827",
-                            fontWeight: "600",
-                          }}
-                        >
-                          <input
-                            type="checkbox"
-                            name="payment_ids"
-                            value={p.id}
-                            defaultChecked={Number(p.id) === Number(payment.id)}
-                          />
-                          Round {p.round} - £11
-                        </label>
-                      ))}
-                    </div>
-
-                    <button
-                      type="submit"
-                      style={{
-                        marginTop: "10px",
-                        background: primary,
-                        color: textColor,
-                        border: "none",
-                        padding: "8px 8px",
-                        borderRadius: "8px",
-                        fontWeight: "bold",
-                        cursor: "pointer",
-                        fontSize: "13px",
-                        width: "100%",
-                        maxWidth: "120px",
-                      }}
-                    >
-                      Pay Selected
-                    </button>
-                  </form>
+                  <PaymentButton
+                    payment={payment}
+                    allFixtures={allFixtures}
+                    primary={primary}
+                    textColor={textColor}
+                  />
                 )}
               </>
             )}
