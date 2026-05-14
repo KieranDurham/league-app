@@ -1316,6 +1316,42 @@ fontSize: "14px",
   textColor={textColor}
   getInitials={getInitials}
 />
+
+<div
+  style={{
+    background: "#d1d5db",
+    width: "1px",
+    minHeight: "180px",
+  }}
+/>
+<PaymentColumn
+  payments={homePayments}
+  fixture={fixture}
+  allFixtures={fixturesWithPayments}
+  side="A"
+  align="left"
+  primary={primary}
+  textColor={textColor}
+  getInitials={getInitials}
+/>
+
+<div
+  style={{
+    background: "#d1d5db",
+    width: "1px",
+    minHeight: "180px",
+  }}
+/>
+<PaymentColumn
+  payments={awayPayments}
+  fixture={fixture}
+  allFixtures={fixturesWithPayments}
+  side="B"
+  align="right"
+  primary={primary}
+  textColor={textColor}
+  getInitials={getInitials}
+/>
                       <div
                         style={{
                           background: "#d1d5db",
