@@ -1,4 +1,4 @@
-import type { CSSProperties } from "react";
+ import type { CSSProperties } from "react";
 import { supabase } from "@/lib/supabase";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -739,7 +739,7 @@ export default async function Home({
                   </div>
                 )}
 
-                {fixture.played && (
+                {isAdmin && fixture.played && (
                   <form action={resetScore} style={{ marginTop: "10px" }}>
                     <input type="hidden" name="fixture_id" value={fixture.id} />
                     <input type="hidden" name="division_id" value={selectedDivisionId} />
@@ -918,4 +918,4 @@ function cardStyle(primary: string): CSSProperties {
     overflow: "hidden",
     boxSizing: "border-box",
   };
-}
+}            
