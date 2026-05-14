@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
+import { supabase } from "@/lib/supabase";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
 
@@ -7,8 +8,53 @@ export async function POST(req: Request) {
   try {
     const formData = await req.formData();
 
-    const paymentId = formData.get("payment_id");
-    const amount = Number(formData.get("amount"));
+    const paymentIdsRaw = String(formData.get("payment_ids") || "");
+    const paymentIds = paymentIdsRaw
+      .split(",")
+      .map((id) => Number(id.trim()))
+      .filter(Boolean);
+
+    if (!paymentIds.length) {
+      return new NextResponse("No payment IDs provided", { status: 400 });
+    }
+
+    const currentPaymentId = paymentIds[0];
+
+    const { data: currentPayment } = await supabase
+      .from("fixture_payments")
+      .select("*, fixtures(*)")
+      .eq("id", currentPaymentId)
+      .single();
+
+    let nextPaymentId = "";
+
+    if (currentPayment) {
+      const currentRound = Number(currentPayment.fixtures?.round || 0);
+      const divisionId = Number(currentPayment.fixtures?.division_id || 0);
+
+      const { data: nextPayments } = await supabase
+        .from("fixture_payments")
+        .select("*, fixtures(*)")
+        .eq("player_name", currentPayment.player_name)
+        .eq("team_id", currentPayment.team_id)
+        .eq("status", "unpaid");
+
+      const nextPayment = nextPayments
+        ?.filter(
+          (payment: any) =>
+            Number(payment.id) !== Number(currentPaymentId) &&
+            Number(payment.fixtures?.division_id) === divisionId &&
+            Number(payment.fixtures?.round) > currentRound
+        )
+        .sort(
+          (a: any, b: any) =>
+            Number(a.fixtures?.round) - Number(b.fixtures?.round)
+        )[0];
+
+      if (nextPayment) {
+        nextPaymentId = String(nextPayment.id);
+      }
+    }
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
@@ -19,19 +65,25 @@ export async function POST(req: Request) {
           price_data: {
             currency: "gbp",
             product_data: {
-              name: "Match Fee",
+              name: "Match Fee - select 1 or 2 rounds",
             },
-            unit_amount: amount * 100,
+            unit_amount: 1100,
           },
           quantity: 1,
+          adjustable_quantity: {
+            enabled: true,
+            minimum: 1,
+            maximum: nextPaymentId ? 2 : 1,
+          },
         },
       ],
 
-      success_url: `https://league-app-plum.vercel.app/api/payment-success?payment_id=${paymentId}`,
+      success_url: "https://league-app-plum.vercel.app/payment-success",
       cancel_url: "https://league-app-plum.vercel.app?cancelled=true",
 
       metadata: {
-        payment_id: String(paymentId),
+        current_payment_id: String(currentPaymentId),
+        next_payment_id: nextPaymentId,
       },
     });
 

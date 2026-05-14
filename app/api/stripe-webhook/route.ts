@@ -1,45 +1,27 @@
-import { NextResponse } from "next/server";
-import Stripe from "stripe";
-import { supabase } from "@/lib/supabase";
+if (event.type === "checkout.session.completed") {
+  const session = event.data.object as Stripe.Checkout.Session;
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
+  const fullSession = await stripe.checkout.sessions.retrieve(session.id, {
+    expand: ["line_items"],
+  });
 
-export async function POST(req: Request) {
-  const body = await req.text();
+  const quantity =
+    fullSession.line_items?.data?.[0]?.quantity || 1;
 
-  const sig = req.headers.get("stripe-signature") as string;
+  const currentPaymentId = Number(session.metadata?.current_payment_id);
+  const nextPaymentId = Number(session.metadata?.next_payment_id);
 
-  let event: Stripe.Event;
+  const paymentIdsToUpdate = [currentPaymentId];
 
-  try {
-    event = stripe.webhooks.constructEvent(
-      body,
-      sig,
-      process.env.STRIPE_WEBHOOK_SECRET as string
-    );
-  } catch (err) {
-    console.error("Webhook signature error:", err);
-
-    return new NextResponse("Webhook Error", {
-      status: 400,
-    });
+  if (quantity >= 2 && nextPaymentId) {
+    paymentIdsToUpdate.push(nextPaymentId);
   }
 
-  if (event.type === "checkout.session.completed") {
-    const session = event.data.object as Stripe.Checkout.Session;
-
-    const paymentId = session.metadata?.payment_id;
-
-    if (paymentId) {
-      await supabase
-        .from("fixture_payments")
-        .update({
-          amount_paid: 11,
-          status: "paid",
-        })
-        .eq("id", Number(paymentId));
-    }
-  }
-
-  return NextResponse.json({ received: true });
+  await supabase
+    .from("fixture_payments")
+    .update({
+      amount_paid: 11,
+      status: "paid",
+    })
+    .in("id", paymentIdsToUpdate);
 }
