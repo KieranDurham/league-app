@@ -1656,8 +1656,12 @@ function PaymentColumn({
                   </div>
                 ) : (
                   <form action="/api/create-checkout-session" method="POST">
-                    <input type="hidden" name="payment_id" value={payment.id} />
-                    <input type="hidden" name="amount" value={remaining} />
+                    <input
+                      type="hidden"
+                      name="payment_ids"
+                      value={String(payment.id)}
+                    />
+                    <input type="hidden" name="amount" value="11" />
 
                     <button
                       type="submit"
@@ -1675,7 +1679,7 @@ function PaymentColumn({
                         maxWidth: "90px",
                       }}
                     >
-                      Pay £{remaining}
+                      Pay £11
                     </button>
                   </form>
                 )}
