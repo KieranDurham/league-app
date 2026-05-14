@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
-import { supabase } from "@/lib/supabase";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
 
@@ -8,60 +7,16 @@ export async function POST(req: Request) {
   try {
     const formData = await req.formData();
 
-    const paymentIdsRaw = String(formData.get("payment_ids") || "");
-    const paymentIds = paymentIdsRaw
-      .split(",")
-      .map((id) => Number(id.trim()))
+    const paymentIds = formData
+      .getAll("payment_ids")
+      .map((id) => String(id).trim())
       .filter(Boolean);
 
     if (!paymentIds.length) {
       return new NextResponse("No payment IDs provided", { status: 400 });
     }
 
-    const currentPaymentId = paymentIds[0];
-
-    const { data: currentPayment, error: currentPaymentError } = await supabase
-      .from("fixture_payments")
-      .select("*, fixtures(*)")
-      .eq("id", currentPaymentId)
-      .single();
-
-    if (currentPaymentError || !currentPayment) {
-      console.error("Current payment lookup error:", currentPaymentError);
-      return new NextResponse("Payment record not found", { status: 404 });
-    }
-
-    let nextPaymentId = "";
-
-    const currentRound = Number(currentPayment.fixtures?.round || 0);
-    const divisionId = Number(currentPayment.fixtures?.division_id || 0);
-
-    const { data: nextPayments, error: nextPaymentsError } = await supabase
-      .from("fixture_payments")
-      .select("*, fixtures(*)")
-      .eq("player_name", currentPayment.player_name)
-      .eq("team_id", currentPayment.team_id)
-      .eq("status", "unpaid");
-
-    if (nextPaymentsError) {
-      console.error("Next payment lookup error:", nextPaymentsError);
-    }
-
-    const nextPayment = nextPayments
-      ?.filter(
-        (payment: any) =>
-          Number(payment.id) !== Number(currentPaymentId) &&
-          Number(payment.fixtures?.division_id) === divisionId &&
-          Number(payment.fixtures?.round) > currentRound
-      )
-      .sort(
-        (a: any, b: any) =>
-          Number(a.fixtures?.round) - Number(b.fixtures?.round)
-      )[0];
-
-    if (nextPayment) {
-      nextPaymentId = String(nextPayment.id);
-    }
+    const totalAmount = paymentIds.length * 11;
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
@@ -72,23 +27,14 @@ export async function POST(req: Request) {
           price_data: {
             currency: "gbp",
             product_data: {
-              name: nextPaymentId
-                ? "Match Fee - select 1 or 2 rounds"
-                : "Match Fee",
+              name:
+                paymentIds.length > 1
+                  ? `Match Fees - ${paymentIds.length} rounds`
+                  : "Match Fee",
             },
-            unit_amount: 1100,
+            unit_amount: totalAmount * 100,
           },
           quantity: 1,
-
-          ...(nextPaymentId
-            ? {
-                adjustable_quantity: {
-                  enabled: true,
-                  minimum: 1,
-                  maximum: 2,
-                },
-              }
-            : {}),
         },
       ],
 
@@ -96,8 +42,7 @@ export async function POST(req: Request) {
       cancel_url: "https://league-app-plum.vercel.app?cancelled=true",
 
       metadata: {
-        current_payment_id: String(currentPaymentId),
-        next_payment_id: nextPaymentId,
+        payment_ids: paymentIds.join(","),
       },
     });
 

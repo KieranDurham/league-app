@@ -1538,6 +1538,7 @@ fontSize: "14px",
 function PaymentColumn({
   payments,
   fixture,
+  allFixtures,
   side,
   align,
   primary,
@@ -1562,15 +1563,24 @@ function PaymentColumn({
         const remaining = amountDue - amountPaid;
         const isPaid = remaining <= 0;
 
+        const selectablePayments =
+          allFixtures
+            ?.flatMap((f: any) =>
+              (f.fixture_payments || []).map((p: any) => ({
+                ...p,
+                round: f.round,
+              }))
+            )
+            .filter(
+              (p: any) =>
+                p.player_name === payment.player_name &&
+                Number(p.team_id) === Number(payment.team_id) &&
+                p.status !== "paid"
+            )
+            .sort((a: any, b: any) => Number(a.round) - Number(b.round)) || [];
+
         return (
-          <div
-            key={payment.id}
-            style={{
-              minWidth: 0,
-              maxWidth: "100%",
-              overflow: "hidden",
-            }}
-          >
+          <div key={payment.id} style={{ minWidth: 0, maxWidth: "100%" }}>
             <div
               style={{
                 width: "52px",
@@ -1597,8 +1607,6 @@ function PaymentColumn({
                 whiteSpace: "nowrap",
                 overflow: "hidden",
                 textOverflow: "ellipsis",
-                minWidth: 0,
-                maxWidth: "100%",
               }}
             >
               {payment.player_name}
@@ -1622,14 +1630,7 @@ function PaymentColumn({
             )}
 
             {fixture.is_private_game ? (
-              <div
-                style={{
-                  marginTop: "10px",
-                  fontSize: "12px",
-                  fontWeight: "bold",
-                  color: "#166534",
-                }}
-              >
+              <div style={{ marginTop: "10px", fontSize: "12px", fontWeight: "bold", color: "#166534" }}>
                 No payment required
               </div>
             ) : (
@@ -1646,27 +1647,45 @@ function PaymentColumn({
                 </div>
 
                 {isPaid ? (
-                  <div
-                    style={{
-                      fontSize: "24px",
-                      marginTop: "6px",
-                    }}
-                  >
-                    🪙
-                  </div>
+                  <div style={{ fontSize: "24px", marginTop: "6px" }}>🪙</div>
                 ) : (
                   <form action="/api/create-checkout-session" method="POST">
-                    <input
-                      type="hidden"
-                      name="payment_ids"
-                      value={String(payment.id)}
-                    />
-                    <input type="hidden" name="amount" value="11" />
+                    <div
+                      style={{
+                        marginTop: "10px",
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "6px",
+                        alignItems: "center",
+                      }}
+                    >
+                      {selectablePayments.map((p: any) => (
+                        <label
+                          key={p.id}
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "6px",
+                            fontSize: "12px",
+                            color: "#111827",
+                            fontWeight: "600",
+                          }}
+                        >
+                          <input
+                            type="checkbox"
+                            name="payment_ids"
+                            value={p.id}
+                            defaultChecked={Number(p.id) === Number(payment.id)}
+                          />
+                          Round {p.round} - £11
+                        </label>
+                      ))}
+                    </div>
 
                     <button
                       type="submit"
                       style={{
-                        marginTop: "8px",
+                        marginTop: "10px",
                         background: primary,
                         color: textColor,
                         border: "none",
@@ -1676,10 +1695,10 @@ function PaymentColumn({
                         cursor: "pointer",
                         fontSize: "13px",
                         width: "100%",
-                        maxWidth: "90px",
+                        maxWidth: "120px",
                       }}
                     >
-                      Pay £11
+                      Pay Selected
                     </button>
                   </form>
                 )}
