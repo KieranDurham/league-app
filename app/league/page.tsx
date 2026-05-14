@@ -226,7 +226,6 @@ export default async function Home({
     .order("round", { ascending: true });
 
   const fixtureIds = fixtures?.map((fixture: any) => fixture.id) || [];
-
   const missingPaymentsToCreate: any[] = [];
 
   fixtures?.forEach((fixture: any) => {
@@ -654,63 +653,6 @@ export default async function Home({
                   </strong>
                 </div>
 
-                {isAdmin && (
-                  <div style={{ border: "1px solid #d1d5db", borderRadius: "10px", padding: "12px", marginBottom: "12px", background: "#f9fafb" }}>
-                    <form action={updateFixture}>
-                      <input type="hidden" name="fixture_id" value={fixture.id} />
-                      <input type="hidden" name="division_id" value={selectedDivisionId} />
-                      <input type="hidden" name="league_type" value={selectedLeague} />
-
-                      <input name="round" type="number" defaultValue={fixture.round} required style={{ ...inputStyle, marginBottom: "8px" }} />
-                      <input name="fixture_day" type="text" defaultValue={fixture.fixture_day || ""} style={{ ...inputStyle, marginBottom: "8px" }} />
-                      <input name="fixture_time" type="text" defaultValue={fixture.fixture_time || ""} style={{ ...inputStyle, marginBottom: "8px" }} />
-
-                      <select name="home_team_id" defaultValue={fixture.home_team_id} required style={{ ...selectStyle, marginBottom: "8px" }}>
-                        {teams?.map((team: any) => (
-                          <option key={team.id} value={team.id}>{team.name}</option>
-                        ))}
-                      </select>
-
-                      <select name="away_team_id" defaultValue={fixture.away_team_id} required style={{ ...selectStyle, marginBottom: "8px" }}>
-                        {teams?.map((team: any) => (
-                          <option key={team.id} value={team.id}>{team.name}</option>
-                        ))}
-                      </select>
-
-                      <label style={{ display: "flex", gap: "8px", marginBottom: "12px", fontWeight: "bold" }}>
-                        <input name="is_private_game" type="checkbox" defaultChecked={fixture.is_private_game} />
-                        Private game - no payment required
-                      </label>
-
-                      <button type="submit" style={buttonPrimaryStyle("#2563eb", "#ffffff")}>
-                        Save Fixture Changes
-                      </button>
-                    </form>
-                  </div>
-                )}
-
-                {isAdmin && (
-                  <form action={togglePrivateGame} style={{ marginBottom: "10px" }}>
-                    <input type="hidden" name="fixture_id" value={fixture.id} />
-                    <input type="hidden" name="division_id" value={selectedDivisionId} />
-                    <input type="hidden" name="league_type" value={selectedLeague} />
-                    <input type="hidden" name="current_value" value={fixture.is_private_game ? "true" : "false"} />
-
-                    <button
-                      type="submit"
-                      style={buttonPrimaryStyle(fixture.is_private_game ? "#b91c1c" : primary, "#ffffff")}
-                    >
-                      {fixture.is_private_game ? "Remove Private Game" : "Mark as Private Game"}
-                    </button>
-                  </form>
-                )}
-
-                {fixture.is_private_game && (
-                  <div style={{ background: "#dcfce7", color: "#166534", border: "1px solid #86efac", padding: "10px", borderRadius: "10px", marginBottom: "12px", textAlign: "center", fontWeight: "bold" }}>
-                    Private game - no payment required
-                  </div>
-                )}
-
                 <div style={{ border: "1px solid #e5e7eb", borderRadius: "14px", padding: "10px", marginBottom: "14px", background: "#ffffff", overflow: "hidden" }}>
                   {fixture.fixture_payments?.length > 0 ? (
                     <div
@@ -761,7 +703,7 @@ export default async function Home({
                   </div>
                 )}
 
-                {isAdmin && !fixture.played && (
+                {!fixture.played && (
                   <form action={submitScore} style={{ marginTop: "10px" }}>
                     <input type="hidden" name="fixture_id" value={fixture.id} />
                     <input type="hidden" name="division_id" value={selectedDivisionId} />
@@ -797,7 +739,7 @@ export default async function Home({
                   </div>
                 )}
 
-                {isAdmin && fixture.played && (
+                {fixture.played && (
                   <form action={resetScore} style={{ marginTop: "10px" }}>
                     <input type="hidden" name="fixture_id" value={fixture.id} />
                     <input type="hidden" name="division_id" value={selectedDivisionId} />
