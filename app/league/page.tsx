@@ -10,6 +10,27 @@ function leagueRedirect(leagueType: string, divisionId: number, extra = "") {
   redirect(`/league?league=${leagueType}&division=${divisionId}&admin=true${extra}`);
 }
 
+async function updateTeamName(formData: FormData) {
+  "use server";
+
+  const teamId = Number(formData.get("team_id"));
+  const divisionId = Number(formData.get("division_id"));
+  const leagueType = String(formData.get("league_type") || "mens");
+  const teamName = String(formData.get("team_name") || "").trim();
+
+  if (!teamId || !teamName) {
+    leagueRedirect(leagueType, divisionId);
+  }
+
+  await supabase.from("teams").update({ name: teamName }).eq("id", teamId);
+
+  revalidatePath("/");
+  revalidatePath("/league");
+  revalidatePath("/summary");
+
+  leagueRedirect(leagueType, divisionId);
+}
+
 async function addFixture(formData: FormData) {
   "use server";
 
@@ -28,6 +49,7 @@ async function addFixture(formData: FormData) {
 
   await supabase.from("fixtures").insert({
     division_id: divisionId,
+    league_type: leagueType,
     round,
     home_team_id: homeTeamId,
     away_team_id: awayTeamId,
@@ -72,6 +94,7 @@ async function updateFixture(formData: FormData) {
   await supabase
     .from("fixtures")
     .update({
+      league_type: leagueType,
       round,
       home_team_id: homeTeamId,
       away_team_id: awayTeamId,
@@ -96,10 +119,7 @@ async function togglePrivateGame(formData: FormData) {
   const currentValue = formData.get("current_value") === "true";
   const leagueType = String(formData.get("league_type") || "mens");
 
-  await supabase
-    .from("fixtures")
-    .update({ is_private_game: !currentValue })
-    .eq("id", fixtureId);
+  await supabase.from("fixtures").update({ is_private_game: !currentValue }).eq("id", fixtureId);
 
   revalidatePath("/");
   revalidatePath("/league");
@@ -211,17 +231,20 @@ export default async function Home({
   const { data: divisions } = await supabase
     .from("divisions")
     .select("*")
+    .eq("league_type", selectedLeague)
     .order("id", { ascending: true });
 
   const { data: teams } = await supabase
     .from("teams")
     .select("*")
+    .eq("league_type", selectedLeague)
     .eq("division_id", selectedDivisionId)
     .order("name", { ascending: true });
 
   const { data: fixtures } = await supabase
     .from("fixtures")
     .select("*")
+    .eq("league_type", selectedLeague)
     .eq("division_id", selectedDivisionId)
     .order("round", { ascending: true });
 
@@ -418,6 +441,38 @@ export default async function Home({
         </a>
       </div>
 
+      <div style={{ display: "flex", gap: "8px", marginBottom: "14px" }}>
+        <a
+          href={`/league?league=mens&division=${selectedDivisionId}${adminQuery}`}
+          style={{
+            padding: "9px 13px",
+            borderRadius: "999px",
+            background: selectedLeague === "mens" ? "#111827" : "#eeeeee",
+            color: selectedLeague === "mens" ? "#ffffff" : "#000000",
+            textDecoration: "none",
+            fontWeight: "bold",
+            whiteSpace: "nowrap",
+          }}
+        >
+          Mens / Mixed
+        </a>
+
+        <a
+          href={`/league?league=ladies&division=${selectedDivisionId}${adminQuery}`}
+          style={{
+            padding: "9px 13px",
+            borderRadius: "999px",
+            background: selectedLeague === "ladies" ? "#111827" : "#eeeeee",
+            color: selectedLeague === "ladies" ? "#ffffff" : "#000000",
+            textDecoration: "none",
+            fontWeight: "bold",
+            whiteSpace: "nowrap",
+          }}
+        >
+          Ladies / Mixed
+        </a>
+      </div>
+
       {currentDivision.logo_url && (
         <div style={{ display: "flex", justifyContent: "center", marginBottom: "16px" }}>
           <img
@@ -437,9 +492,10 @@ export default async function Home({
           textAlign: "center",
           marginBottom: "12px",
           fontSize: "26px",
+          textTransform: "capitalize",
         }}
       >
-        {currentDivision.name}
+        {currentDivision.name || `${selectedLeague} League`}
       </h1>
 
       {isAdmin && (
@@ -541,11 +597,53 @@ export default async function Home({
           <tbody>
             {leagueTable.map((team: any) => (
               <tr key={team.id} style={{ borderBottom: `1px solid ${primary}` }}>
-                <td style={{ padding: "10px", fontWeight: "bold" }}>
-                  <a href={`/team/${team.id}`} style={teamLinkStyle}>
-                    {team.name}
-                  </a>
-                </td>
+<td style={{ padding: "10px", fontWeight: "bold" }}>
+  {isAdmin ? (
+    <form
+      action={updateTeamName}
+      style={{
+        display: "flex",
+        gap: "6px",
+        alignItems: "center",
+      }}
+    >
+      <input type="hidden" name="team_id" value={team.id} />
+      <input type="hidden" name="division_id" value={selectedDivisionId} />
+      <input type="hidden" name="league_type" value={selectedLeague} />
+
+      <input
+        name="team_name"
+        defaultValue={team.name}
+        style={{
+          ...inputStyle,
+          padding: "7px",
+          fontSize: "13px",
+          minWidth: "150px",
+        }}
+      />
+
+      <button
+        type="submit"
+        style={{
+          background: primary,
+          color: textColor,
+          border: "none",
+          borderRadius: "7px",
+          padding: "8px 10px",
+          fontWeight: "bold",
+          cursor: "pointer",
+          whiteSpace: "nowrap",
+        }}
+      >
+        Save
+      </button>
+    </form>
+  ) : (
+    <a href={`/team/${team.id}`} style={teamLinkStyle}>
+      {team.name}
+    </a>
+  )}
+</td>
                 <td style={{ textAlign: "center" }}>{team.played}</td>
                 <td style={{ textAlign: "center" }}>{team.won}</td>
                 <td style={{ textAlign: "center" }}>{team.drawn}</td>
@@ -559,6 +657,46 @@ export default async function Home({
           </tbody>
         </table>
       </div>
+
+      {isAdmin && (
+        <div style={cardStyle(primary)}>
+          <h3 style={{ marginTop: 0 }}>Edit Teams</h3>
+
+          {teams?.map((team: any) => (
+            <form
+              key={team.id}
+              action={updateTeamName}
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr auto",
+                gap: "8px",
+                marginBottom: "8px",
+              }}
+            >
+              <input type="hidden" name="team_id" value={team.id} />
+              <input type="hidden" name="division_id" value={selectedDivisionId} />
+              <input type="hidden" name="league_type" value={selectedLeague} />
+
+              <input name="team_name" defaultValue={team.name} style={inputStyle} />
+
+              <button
+                type="submit"
+                style={{
+                  background: primary,
+                  color: textColor,
+                  border: "none",
+                  borderRadius: "8px",
+                  padding: "10px 14px",
+                  fontWeight: "bold",
+                  cursor: "pointer",
+                }}
+              >
+                Save
+              </button>
+            </form>
+          ))}
+        </div>
+      )}
 
       <h2 id="fixtures">Fixtures</h2>
 
