@@ -123,7 +123,10 @@ async function togglePrivateGame(formData: FormData) {
   const currentValue = formData.get("current_value") === "true";
   const leagueType = String(formData.get("league_type") || "mens");
 
-  await supabase.from("fixtures").update({ is_private_game: !currentValue }).eq("id", fixtureId);
+  await supabase
+    .from("fixtures")
+    .update({ is_private_game: !currentValue })
+    .eq("id", fixtureId);
 
   revalidatePath("/");
   revalidatePath("/league");
@@ -217,6 +220,87 @@ async function resetScore(formData: FormData) {
   adminRedirect(leagueType, divisionId);
 }
 
+async function generateFixtures(formData: FormData) {
+  "use server";
+
+  const divisionId = Number(formData.get("division_id"));
+  const leagueType = String(formData.get("league_type") || "mens");
+
+  const { data: teams } = await supabase
+    .from("teams")
+    .select("id, name")
+    .eq("league_type", leagueType)
+    .eq("division_id", divisionId)
+    .order("name", { ascending: true });
+
+  if (!teams || teams.length < 2) {
+    adminRedirect(leagueType, divisionId);
+  }
+
+  const { data: existingFixtures } = await supabase
+    .from("fixtures")
+    .select("id")
+    .eq("league_type", leagueType)
+    .eq("division_id", divisionId)
+    .limit(1);
+
+  if (existingFixtures && existingFixtures.length > 0) {
+    adminRedirect(leagueType, divisionId, "#fixtures");
+  }
+
+  let workingTeams: any[] = [...teams];
+
+  if (workingTeams.length % 2 !== 0) {
+    workingTeams.push({ id: -1, name: "BYE" });
+  }
+
+  const rounds = workingTeams.length - 1;
+  const matchesPerRound = workingTeams.length / 2;
+  const fixtureRows: any[] = [];
+
+  for (let round = 1; round <= rounds; round++) {
+    for (let match = 0; match < matchesPerRound; match++) {
+      const home = workingTeams[match];
+      const away = workingTeams[workingTeams.length - 1 - match];
+
+      if (home.id !== -1 && away.id !== -1) {
+        fixtureRows.push({
+          division_id: divisionId,
+          league_type: leagueType,
+          round,
+          home_team_id: home.id,
+          away_team_id: away.id,
+          fixture_day: "",
+          fixture_time: "",
+          is_private_game: false,
+          played: false,
+          home_score: 0,
+          away_score: 0,
+          home_set1: null,
+          away_set1: null,
+          home_set2: null,
+          away_set2: null,
+          home_set3: null,
+          away_set3: null,
+        });
+      }
+    }
+
+    const fixedTeam = workingTeams[0];
+    const rotatingTeams = workingTeams.slice(1);
+    rotatingTeams.unshift(rotatingTeams.pop());
+    workingTeams = [fixedTeam, ...rotatingTeams];
+  }
+
+  await supabase.from("fixtures").insert(fixtureRows);
+
+  revalidatePath("/");
+  revalidatePath("/league");
+  revalidatePath("/summary");
+
+  adminRedirect(leagueType, divisionId, "#fixtures");
+}
+
 export default async function Home({
   searchParams,
 }: {
@@ -228,7 +312,6 @@ export default async function Home({
 }) {
   const params = await searchParams;
 
-  const selectedDivisionId = Number(params?.division || 1);
   const selectedLeague = params?.league || "mens";
   const isAdmin = params?.admin === "true";
 
@@ -237,6 +320,9 @@ export default async function Home({
     .select("*")
     .eq("league_type", selectedLeague)
     .order("id", { ascending: true });
+
+  const defaultDivisionId = divisions?.[0]?.id || 1;
+  const selectedDivisionId = Number(params?.division || defaultDivisionId);
 
   const { data: teams } = await supabase
     .from("teams")
@@ -256,8 +342,12 @@ export default async function Home({
   const missingPaymentsToCreate: any[] = [];
 
   fixtures?.forEach((fixture: any) => {
-    const homeTeam = teams?.find((team: any) => Number(team.id) === Number(fixture.home_team_id));
-    const awayTeam = teams?.find((team: any) => Number(team.id) === Number(fixture.away_team_id));
+    const homeTeam = teams?.find(
+      (team: any) => Number(team.id) === Number(fixture.home_team_id)
+    );
+    const awayTeam = teams?.find(
+      (team: any) => Number(team.id) === Number(fixture.away_team_id)
+    );
 
     [homeTeam, awayTeam].forEach((team: any) => {
       if (!team?.name) return;
@@ -300,10 +390,13 @@ export default async function Home({
     fixtures?.map((fixture: any) => ({
       ...fixture,
       fixture_payments:
-        payments?.filter((payment: any) => Number(payment.fixture_id) === Number(fixture.id)) || [],
+        payments?.filter(
+          (payment: any) => Number(payment.fixture_id) === Number(fixture.id)
+        ) || [],
     })) || [];
 
-  const currentDivision = divisions?.find((d: any) => Number(d.id) === selectedDivisionId) || {};
+  const currentDivision =
+    divisions?.find((d: any) => Number(d.id) === selectedDivisionId) || {};
 
   const primary = currentDivision.primary_color || "#000000";
   const secondary = currentDivision.secondary_color || "#ffffff";
@@ -447,7 +540,7 @@ export default async function Home({
 
       <div style={{ display: "flex", gap: "8px", marginBottom: "14px" }}>
         <a
-          href={`/league?league=mens&division=${selectedDivisionId}${adminQuery}`}
+          href={`/league?league=mens${adminQuery}`}
           style={{
             padding: "9px 13px",
             borderRadius: "999px",
@@ -462,7 +555,7 @@ export default async function Home({
         </a>
 
         <a
-          href={`/league?league=ladies&division=${selectedDivisionId}${adminQuery}`}
+          href={`/league?league=ladies${adminQuery}`}
           style={{
             padding: "9px 13px",
             borderRadius: "999px",
@@ -540,32 +633,6 @@ export default async function Home({
         ))}
       </div>
 
-      {roundNumbers.length > 0 && (
-        <div style={{ marginBottom: "20px", padding: "12px", borderRadius: "12px", background: "#ffffff", border: "1px solid #dddddd" }}>
-          <div style={{ fontWeight: "bold", marginBottom: "8px" }}>Jump to round</div>
-          <div style={{ display: "flex", gap: "8px", overflowX: "auto", paddingBottom: "4px" }}>
-            {roundNumbers.map((round) => (
-              <a
-                key={round}
-                href={`#round-${round}`}
-                style={{
-                  minWidth: "44px",
-                  textAlign: "center",
-                  padding: "9px 12px",
-                  borderRadius: "999px",
-                  background: primary,
-                  color: textColor,
-                  textDecoration: "none",
-                  fontWeight: "bold",
-                }}
-              >
-                {round}
-              </a>
-            ))}
-          </div>
-        </div>
-      )}
-
       <div style={{ marginBottom: "20px", textAlign: "center" }}>
         <a
           href={`/summary?league=${selectedLeague}${adminQuery}`}
@@ -603,42 +670,12 @@ export default async function Home({
               <tr key={team.id} style={{ borderBottom: `1px solid ${primary}` }}>
                 <td style={{ padding: "10px", fontWeight: "bold" }}>
                   {isAdmin ? (
-                    <form
-                      action={updateTeamName}
-                      style={{
-                        display: "flex",
-                        gap: "6px",
-                        alignItems: "center",
-                      }}
-                    >
+                    <form action={updateTeamName} style={{ display: "flex", gap: "6px", alignItems: "center" }}>
                       <input type="hidden" name="team_id" value={team.id} />
                       <input type="hidden" name="division_id" value={selectedDivisionId} />
                       <input type="hidden" name="league_type" value={selectedLeague} />
-
-                      <input
-                        name="team_name"
-                        defaultValue={team.name}
-                        style={{
-                          ...inputStyle,
-                          padding: "7px",
-                          fontSize: "13px",
-                          minWidth: "150px",
-                        }}
-                      />
-
-                      <button
-                        type="submit"
-                        style={{
-                          background: primary,
-                          color: textColor,
-                          border: "none",
-                          borderRadius: "7px",
-                          padding: "8px 10px",
-                          fontWeight: "bold",
-                          cursor: "pointer",
-                          whiteSpace: "nowrap",
-                        }}
-                      >
+                      <input name="team_name" defaultValue={team.name} style={{ ...inputStyle, padding: "7px", fontSize: "13px", minWidth: "150px" }} />
+                      <button type="submit" style={{ background: primary, color: textColor, border: "none", borderRadius: "7px", padding: "8px 10px", fontWeight: "bold", cursor: "pointer", whiteSpace: "nowrap" }}>
                         Save
                       </button>
                     </form>
@@ -664,37 +701,31 @@ export default async function Home({
 
       {isAdmin && (
         <div style={cardStyle(primary)}>
-          <h3 style={{ marginTop: 0 }}>Edit Teams</h3>
+          <h3 style={{ marginTop: 0 }}>Fixture Generator</h3>
+          <p style={{ marginTop: 0 }}>Generate fixtures so every team in this division plays each other once.</p>
+          <p style={{ marginTop: 0, fontSize: "13px", color: "#555555" }}>
+            This will not generate more fixtures if this division already has fixtures.
+          </p>
+          <form action={generateFixtures}>
+            <input type="hidden" name="division_id" value={selectedDivisionId} />
+            <input type="hidden" name="league_type" value={selectedLeague} />
+            <button type="submit" style={buttonPrimaryStyle(primary, textColor)}>
+              Generate Fixtures
+            </button>
+          </form>
+        </div>
+      )}
 
+      {isAdmin && (
+        <div style={cardStyle(primary)}>
+          <h3 style={{ marginTop: 0 }}>Edit Teams</h3>
           {teams?.map((team: any) => (
-            <form
-              key={team.id}
-              action={updateTeamName}
-              style={{
-                display: "grid",
-                gridTemplateColumns: "1fr auto",
-                gap: "8px",
-                marginBottom: "8px",
-              }}
-            >
+            <form key={team.id} action={updateTeamName} style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: "8px", marginBottom: "8px" }}>
               <input type="hidden" name="team_id" value={team.id} />
               <input type="hidden" name="division_id" value={selectedDivisionId} />
               <input type="hidden" name="league_type" value={selectedLeague} />
-
               <input name="team_name" defaultValue={team.name} style={inputStyle} />
-
-              <button
-                type="submit"
-                style={{
-                  background: primary,
-                  color: textColor,
-                  border: "none",
-                  borderRadius: "8px",
-                  padding: "10px 14px",
-                  fontWeight: "bold",
-                  cursor: "pointer",
-                }}
-              >
+              <button type="submit" style={{ background: primary, color: textColor, border: "none", borderRadius: "8px", padding: "10px 14px", fontWeight: "bold", cursor: "pointer" }}>
                 Save
               </button>
             </form>
@@ -704,14 +735,38 @@ export default async function Home({
 
       <h2 id="fixtures">Fixtures</h2>
 
+      {roundNumbers.length > 0 && (
+        <div style={{ marginBottom: "20px", padding: "12px", borderRadius: "12px", background: "#ffffff", border: "1px solid #dddddd" }}>
+          <div style={{ fontWeight: "bold", marginBottom: "8px" }}>Jump to round</div>
+          <div style={{ display: "flex", gap: "8px", overflowX: "auto", paddingBottom: "4px" }}>
+            {roundNumbers.map((round) => (
+              <a
+                key={round}
+                href={`#round-${round}`}
+                style={{
+                  minWidth: "44px",
+                  textAlign: "center",
+                  padding: "9px 12px",
+                  borderRadius: "999px",
+                  background: primary,
+                  color: textColor,
+                  textDecoration: "none",
+                  fontWeight: "bold",
+                }}
+              >
+                {round}
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
+
       {isAdmin && (
         <div style={cardStyle(primary)}>
           <h3 style={{ marginTop: 0 }}>Add Fixture</h3>
-
           <form action={addFixture}>
             <input type="hidden" name="division_id" value={selectedDivisionId} />
             <input type="hidden" name="league_type" value={selectedLeague} />
-
             <input name="round" type="number" required placeholder="Round" style={{ ...inputStyle, marginBottom: "10px" }} />
             <input name="fixture_day" type="text" placeholder="Day" style={{ ...inputStyle, marginBottom: "10px" }} />
             <input name="fixture_time" type="text" placeholder="Time" style={{ ...inputStyle, marginBottom: "10px" }} />
@@ -754,7 +809,6 @@ export default async function Home({
 
           {roundFixtures.map((fixture: any) => {
             const showThirdSet = fixture.played && fixture.home_set3 !== null && fixture.away_set3 !== null;
-
             const homeTeamName = getTeamName(fixture.home_team_id);
             const awayTeamName = getTeamName(fixture.away_team_id);
 
@@ -801,16 +855,7 @@ export default async function Home({
 
                 <div style={{ border: "1px solid #e5e7eb", borderRadius: "14px", padding: "10px", marginBottom: "14px", background: "#ffffff", overflow: "hidden" }}>
                   {fixture.fixture_payments?.length > 0 ? (
-                    <div
-                      style={{
-                        display: "grid",
-                        gridTemplateColumns: "minmax(0, 1fr) 1px minmax(0, 1fr)",
-                        gap: "10px",
-                        alignItems: "stretch",
-                        width: "100%",
-                        overflow: "hidden",
-                      }}
-                    >
+                    <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) 1px minmax(0, 1fr)", gap: "10px", alignItems: "stretch", width: "100%", overflow: "hidden" }}>
                       <PaymentColumn
                         payments={homePayments}
                         fixture={fixture}
@@ -883,6 +928,22 @@ export default async function Home({
                   <div style={{ textAlign: "center", color: primary, fontWeight: "bold", marginTop: "8px" }}>
                     Result submitted
                   </div>
+                )}
+
+                {isAdmin && (
+                  <form action={togglePrivateGame} style={{ marginTop: "10px" }}>
+                    <input type="hidden" name="fixture_id" value={fixture.id} />
+                    <input type="hidden" name="division_id" value={selectedDivisionId} />
+                    <input type="hidden" name="league_type" value={selectedLeague} />
+                    <input type="hidden" name="current_value" value={String(fixture.is_private_game)} />
+
+                    <button
+                      type="submit"
+                      style={buttonPrimaryStyle(fixture.is_private_game ? "#166534" : "#374151", "#ffffff")}
+                    >
+                      {fixture.is_private_game ? "Private Game On" : "Mark as Private Game"}
+                    </button>
+                  </form>
                 )}
 
                 {isAdmin && fixture.played && (
@@ -996,21 +1057,19 @@ function PaymentColumn({
               </div>
             ) : (
               <>
-                <div
-                  style={{
-                    marginTop: "10px",
-                    fontSize: "12px",
-                    fontWeight: "bold",
-                    color: isPaid ? "#12202f" : "#cc0000",
-                  }}
-                >
+                <div style={{ marginTop: "10px", fontSize: "12px", fontWeight: "bold", color: isPaid ? "#12202f" : "#cc0000" }}>
                   {isPaid ? "Paid" : "Not paid"}
                 </div>
 
                 {isPaid ? (
                   <div style={{ fontSize: "22px", marginTop: "6px" }}>🪙</div>
                 ) : (
-                  <PaymentButton payment={payment} allFixtures={allFixtures} primary={primary} textColor={textColor} />
+                  <PaymentButton
+                    payment={payment}
+                    allFixtures={allFixtures}
+                    primary={primary}
+                    textColor={textColor}
+                  />
                 )}
               </>
             )}
