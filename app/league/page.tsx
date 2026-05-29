@@ -22,9 +22,7 @@ async function updateTeamName(formData: FormData) {
   const leagueType = String(formData.get("league_type") || "mens");
   const teamName = String(formData.get("team_name") || "").trim();
 
-  if (!teamId || !teamName) {
-    adminRedirect(leagueType, divisionId);
-  }
+  if (!teamId || !teamName) adminRedirect(leagueType, divisionId);
 
   await supabase.from("teams").update({ name: teamName }).eq("id", teamId);
 
@@ -78,43 +76,6 @@ async function addFixture(formData: FormData) {
   adminRedirect(leagueType, divisionId, "#fixtures");
 }
 
-async function updateFixture(formData: FormData) {
-  "use server";
-
-  const fixtureId = Number(formData.get("fixture_id"));
-  const divisionId = Number(formData.get("division_id"));
-  const round = Number(formData.get("round"));
-  const homeTeamId = Number(formData.get("home_team_id"));
-  const awayTeamId = Number(formData.get("away_team_id"));
-  const fixtureDay = String(formData.get("fixture_day") || "").trim();
-  const fixtureTime = String(formData.get("fixture_time") || "").trim();
-  const isPrivateGame = formData.get("is_private_game") === "on";
-  const leagueType = String(formData.get("league_type") || "mens");
-
-  if (!fixtureId || !divisionId || !round || !homeTeamId || !awayTeamId || homeTeamId === awayTeamId) {
-    adminRedirect(leagueType, divisionId);
-  }
-
-  await supabase
-    .from("fixtures")
-    .update({
-      league_type: leagueType,
-      round,
-      home_team_id: homeTeamId,
-      away_team_id: awayTeamId,
-      fixture_day: fixtureDay,
-      fixture_time: fixtureTime,
-      is_private_game: isPrivateGame,
-    })
-    .eq("id", fixtureId);
-
-  revalidatePath("/");
-  revalidatePath("/league");
-  revalidatePath("/summary");
-
-  adminRedirect(leagueType, divisionId, `#round-${round}`);
-}
-
 async function togglePrivateGame(formData: FormData) {
   "use server";
 
@@ -123,10 +84,7 @@ async function togglePrivateGame(formData: FormData) {
   const currentValue = formData.get("current_value") === "true";
   const leagueType = String(formData.get("league_type") || "mens");
 
-  await supabase
-    .from("fixtures")
-    .update({ is_private_game: !currentValue })
-    .eq("id", fixtureId);
+  await supabase.from("fixtures").update({ is_private_game: !currentValue }).eq("id", fixtureId);
 
   revalidatePath("/");
   revalidatePath("/league");
@@ -233,9 +191,7 @@ async function generateFixtures(formData: FormData) {
     .eq("division_id", divisionId)
     .order("name", { ascending: true });
 
-  if (!teams || teams.length < 2) {
-    adminRedirect(leagueType, divisionId);
-  }
+  if (!teams || teams.length < 2) adminRedirect(leagueType, divisionId);
 
   const { data: existingFixtures } = await supabase
     .from("fixtures")
@@ -248,7 +204,7 @@ async function generateFixtures(formData: FormData) {
     adminRedirect(leagueType, divisionId, "#fixtures");
   }
 
-let workingTeams: any[] = [...(teams || [])];
+  let workingTeams: any[] = [...(teams || [])];
 
   if (workingTeams.length % 2 !== 0) {
     workingTeams.push({ id: -1, name: "BYE" });
@@ -288,7 +244,10 @@ let workingTeams: any[] = [...(teams || [])];
 
     const fixedTeam = workingTeams[0];
     const rotatingTeams = workingTeams.slice(1);
-    rotatingTeams.unshift(rotatingTeams.pop());
+    const lastTeam = rotatingTeams.pop();
+
+    if (lastTeam) rotatingTeams.unshift(lastTeam);
+
     workingTeams = [fixedTeam, ...rotatingTeams];
   }
 
@@ -342,12 +301,8 @@ export default async function Home({
   const missingPaymentsToCreate: any[] = [];
 
   fixtures?.forEach((fixture: any) => {
-    const homeTeam = teams?.find(
-      (team: any) => Number(team.id) === Number(fixture.home_team_id)
-    );
-    const awayTeam = teams?.find(
-      (team: any) => Number(team.id) === Number(fixture.away_team_id)
-    );
+    const homeTeam = teams?.find((team: any) => Number(team.id) === Number(fixture.home_team_id));
+    const awayTeam = teams?.find((team: any) => Number(team.id) === Number(fixture.away_team_id));
 
     [homeTeam, awayTeam].forEach((team: any) => {
       if (!team?.name) return;
@@ -390,13 +345,10 @@ export default async function Home({
     fixtures?.map((fixture: any) => ({
       ...fixture,
       fixture_payments:
-        payments?.filter(
-          (payment: any) => Number(payment.fixture_id) === Number(fixture.id)
-        ) || [],
+        payments?.filter((payment: any) => Number(payment.fixture_id) === Number(fixture.id)) || [],
     })) || [];
 
-  const currentDivision =
-    divisions?.find((d: any) => Number(d.id) === selectedDivisionId) || {};
+  const currentDivision = divisions?.find((d: any) => Number(d.id) === selectedDivisionId) || {};
 
   const primary = currentDivision.primary_color || "#000000";
   const secondary = currentDivision.secondary_color || "#ffffff";
@@ -555,7 +507,7 @@ export default async function Home({
         </a>
 
         <a
-          href={`/league?league=ladies${adminQuery}`}
+          href={`/league?league=ladies&division=31${adminQuery}`}
           style={{
             padding: "9px 13px",
             borderRadius: "999px",
@@ -703,9 +655,6 @@ export default async function Home({
         <div style={cardStyle(primary)}>
           <h3 style={{ marginTop: 0 }}>Fixture Generator</h3>
           <p style={{ marginTop: 0 }}>Generate fixtures so every team in this division plays each other once.</p>
-          <p style={{ marginTop: 0, fontSize: "13px", color: "#555555" }}>
-            This will not generate more fixtures if this division already has fixtures.
-          </p>
           <form action={generateFixtures}>
             <input type="hidden" name="division_id" value={selectedDivisionId} />
             <input type="hidden" name="league_type" value={selectedLeague} />

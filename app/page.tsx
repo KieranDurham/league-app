@@ -291,11 +291,7 @@ export default function HomePage() {
 
       <div className="container">
         <section className="hero">
-          <img
-            src="/logo.png"
-            alt="Cleveland Padel League"
-            className="main-logo"
-          />
+          <img src="/logo.png" alt="Cleveland Padel League" className="main-logo" />
 
           <h1 className="title">Cleveland Padel League</h1>
 
@@ -318,11 +314,7 @@ export default function HomePage() {
 
         <section className="cards">
           <a href="/league?league=mens&division=1" className="card">
-            <img
-              src="/mens-league.jpg"
-              alt="Men / Mixed League"
-              className="mens-img"
-            />
+            <img src="/mens-league.jpg" alt="Men / Mixed League" className="mens-img" />
 
             <div className="overlay" />
 
@@ -344,17 +336,13 @@ export default function HomePage() {
             </div>
           </a>
 
-          <a href="/league?league=ladies&division=7" className="card">
-            <img
-              src="/ladies-league.jpg"
-              alt="Ladies / Mixed League"
-              className="ladies-img"
-            />
+          <a href="/league?league=ladies&division=31" className="card">
+            <img src="/ladies-league.jpg" alt="Ladies / Mixed League" className="ladies-img" />
 
             <div className="overlay" />
 
             <div className="content">
-              <div className="badge purple">3 DIVISIONS</div>
+              <div className="badge purple">2 DIVISIONS</div>
 
               <h2 className="card-title">
                 Ladies / Mixed <br />
