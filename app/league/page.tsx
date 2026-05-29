@@ -248,7 +248,7 @@ async function generateFixtures(formData: FormData) {
     adminRedirect(leagueType, divisionId, "#fixtures");
   }
 
-  let workingTeams: any[] = [...teams];
+let workingTeams: any[] = [...(teams || [])];
 
   if (workingTeams.length % 2 !== 0) {
     workingTeams.push({ id: -1, name: "BYE" });
