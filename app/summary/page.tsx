@@ -5,28 +5,52 @@ export const dynamic = "force-dynamic";
 export default async function SummaryPage({
   searchParams,
 }: {
-  searchParams?: Promise<{ round?: string; view?: string }>;
+  searchParams?: Promise<{
+    round?: string;
+    view?: string;
+    league?: string;
+    season?: string;
+    admin?: string;
+  }>;
 }) {
   const params = await searchParams;
+
   const selectedRound = Number(params?.round || 1);
+  const selectedLeague = params?.league || "mens";
+  const selectedSeason =
+    selectedLeague === "mens"
+      ? Number(params?.season || 2)
+      : Number(params?.season || 1);
+
   const isScreenshot = params?.view === "screenshot";
+  const isAdmin = params?.admin === "true";
+  const adminQuery = isAdmin ? "&admin=true" : "";
 
   const { data: divisions } = await supabase
     .from("divisions")
     .select("*")
+    .eq("league_type", selectedLeague)
     .order("id", { ascending: true });
 
-  const { data: teams } = await supabase.from("teams").select("*");
+  const { data: teams } = await supabase
+    .from("teams")
+    .select("*")
+    .eq("league_type", selectedLeague)
+    .eq("season", selectedSeason);
 
   const { data: fixtures } = await supabase
     .from("fixtures")
     .select("*")
+    .eq("league_type", selectedLeague)
+    .eq("season", selectedSeason)
     .eq("round", selectedRound)
     .order("division_id", { ascending: true });
 
   const { data: allFixtures } = await supabase
     .from("fixtures")
     .select("round")
+    .eq("league_type", selectedLeague)
+    .eq("season", selectedSeason)
     .order("round", { ascending: true });
 
   const availableRounds = Array.from(
@@ -305,59 +329,11 @@ export default async function SummaryPage({
           grid-template-columns: repeat(3, minmax(0, 1fr));
           gap: 12px;
         }
-
-        .screenshot .division-card {
-          border-radius: 14px;
-        }
-
-        .screenshot .division-header {
-          height: 112px;
-          padding: 8px;
-        }
-
-        .screenshot .division-logo {
-          width: 50px;
-          height: 50px;
-        }
-
-        .screenshot .division-header h2 {
-          font-size: 19px;
-        }
-
-        .screenshot .fixture-body {
-          padding: 7px 9px;
-        }
-
-        .screenshot .fixture-item {
-          padding: 5px 0;
-          min-height: 66px;
-        }
-
-        .screenshot .fixture-row {
-          grid-template-columns: minmax(0, 1fr) 50px minmax(0, 1fr);
-          gap: 5px;
-        }
-
-        .screenshot .team-name {
-          font-size: 12.5px;
-          line-height: 1.1;
-        }
-
-        .screenshot .score-pill {
-          font-size: 12.5px;
-          padding: 6px 5px;
-          min-width: 50px;
-        }
-
-        .screenshot .sets {
-          font-size: 9.5px;
-          margin-top: 4px;
-        }
       `}</style>
 
       <div className="top-bar">
         <a
-          href="/"
+          href={`/league?league=${selectedLeague}&season=${selectedSeason}${adminQuery}`}
           style={{
             background: "#111111",
             color: "#ffffff",
@@ -375,7 +351,7 @@ export default async function SummaryPage({
           {availableRounds.map((round: any) => (
             <a
               key={round}
-              href={`/summary?round=${round}`}
+              href={`/summary?league=${selectedLeague}&season=${selectedSeason}&round=${round}${adminQuery}`}
               style={{
                 padding: "8px 12px",
                 borderRadius: "999px",
@@ -394,7 +370,7 @@ export default async function SummaryPage({
         </div>
 
         <a
-          href={`/summary?round=${selectedRound}&view=screenshot`}
+          href={`/summary?league=${selectedLeague}&season=${selectedSeason}&round=${selectedRound}&view=screenshot${adminQuery}`}
           style={{
             padding: "8px 12px",
             borderRadius: "999px",
@@ -412,8 +388,13 @@ export default async function SummaryPage({
 
       <section className="main-card">
         <div className="summary-title">
-          <h1>WEEK {selectedRound} RESULTS</h1>
-          <p>League Fixtures Summary</p>
+          <h1>
+            {selectedLeague === "ladies" ? "LADIES / MIXED" : "MENS / MIXED"}{" "}
+            WEEK {selectedRound} RESULTS
+          </h1>
+          <p>
+            Season {selectedSeason} League Fixtures Summary
+          </p>
         </div>
 
         <div className="summary-grid">
