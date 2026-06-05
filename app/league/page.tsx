@@ -28,6 +28,117 @@ function publicRedirect(
   );
 }
 
+function calculateLeagueTable(teams: any[] = [], fixtures: any[] = []) {
+  const table: any = {};
+
+  teams.forEach((team: any) => {
+    table[team.id] = {
+      id: team.id,
+      name: team.name,
+      previous_position: team.previous_position || null,
+      played: 0,
+      won: 0,
+      drawn: 0,
+      lost: 0,
+      points: 0,
+      goal_difference: 0,
+    };
+  });
+
+  fixtures.forEach((fixture: any) => {
+    if (!fixture.played) return;
+
+    const home = table[fixture.home_team_id];
+    const away = table[fixture.away_team_id];
+
+    if (!home || !away) return;
+
+    home.played += 1;
+    away.played += 1;
+
+    let homeGames = (fixture.home_set1 || 0) + (fixture.home_set2 || 0);
+    let awayGames = (fixture.away_set1 || 0) + (fixture.away_set2 || 0);
+
+    const homeFirstTwoSets =
+      (fixture.home_set1 > fixture.away_set1 ? 1 : 0) +
+      (fixture.home_set2 > fixture.away_set2 ? 1 : 0);
+
+    const awayFirstTwoSets =
+      (fixture.away_set1 > fixture.home_set1 ? 1 : 0) +
+      (fixture.away_set2 > fixture.home_set2 ? 1 : 0);
+
+    const thirdSetWasNeeded = homeFirstTwoSets === 1 && awayFirstTwoSets === 1;
+
+    if (thirdSetWasNeeded) {
+      homeGames += fixture.home_set3 || 0;
+      awayGames += fixture.away_set3 || 0;
+    }
+
+    home.goal_difference += homeGames - awayGames;
+    away.goal_difference += awayGames - homeGames;
+
+    if (fixture.home_score > fixture.away_score) {
+      home.won += 1;
+      away.lost += 1;
+      home.points += 3;
+    } else if (fixture.away_score > fixture.home_score) {
+      away.won += 1;
+      home.lost += 1;
+      away.points += 3;
+    } else {
+      home.drawn += 1;
+      away.drawn += 1;
+      home.points += 1;
+      away.points += 1;
+    }
+  });
+
+  return Object.values(table).sort((a: any, b: any) => {
+    if (b.points !== a.points) return b.points - a.points;
+    if (b.goal_difference !== a.goal_difference) {
+      return b.goal_difference - a.goal_difference;
+    }
+    if (b.won !== a.won) return b.won - a.won;
+    return a.name.localeCompare(b.name);
+  });
+}
+
+function getMovement(team: any, currentPosition: number) {
+  const previous = Number(team.previous_position || 0);
+
+  if (!previous) {
+    return {
+      text: "→",
+      color: "#6b7280",
+      label: "No movement",
+    };
+  }
+
+  const movement = previous - currentPosition;
+
+  if (movement > 0) {
+    return {
+      text: `↑${movement}`,
+      color: "#16a34a",
+      label: `Up ${movement}`,
+    };
+  }
+
+  if (movement < 0) {
+    return {
+      text: `↓${Math.abs(movement)}`,
+      color: "#dc2626",
+      label: `Down ${Math.abs(movement)}`,
+    };
+  }
+
+  return {
+    text: "→",
+    color: "#6b7280",
+    label: "No movement",
+  };
+}
+
 async function updateTeamName(formData: FormData) {
   "use server";
 
@@ -134,6 +245,32 @@ async function submitScore(formData: FormData) {
 
   const h3 = rawH3 === null || rawH3 === "" ? null : Number(rawH3);
   const a3 = rawA3 === null || rawA3 === "" ? null : Number(rawA3);
+
+  const { data: currentTeams } = await supabase
+    .from("teams")
+    .select("*")
+    .eq("league_type", leagueType)
+    .eq("division_id", divisionId)
+    .eq("season", season);
+
+  const { data: currentFixtures } = await supabase
+    .from("fixtures")
+    .select("*")
+    .eq("league_type", leagueType)
+    .eq("division_id", divisionId)
+    .eq("season", season);
+
+  const tableBeforeResult = calculateLeagueTable(
+    currentTeams || [],
+    currentFixtures || []
+  );
+
+  for (const [index, team] of tableBeforeResult.entries()) {
+    await supabase
+      .from("teams")
+      .update({ previous_position: index + 1 })
+      .eq("id", team.id);
+  }
 
   let homeSets = 0;
   let awaySets = 0;
@@ -402,77 +539,7 @@ export default async function Home({
   const secondary = currentDivision.secondary_color || "#ffffff";
   const textColor = currentDivision.text_color || "#ffffff";
 
-  const table: any = {};
-
-  teams?.forEach((team: any) => {
-    table[team.id] = {
-      id: team.id,
-      name: team.name,
-      played: 0,
-      won: 0,
-      drawn: 0,
-      lost: 0,
-      points: 0,
-      goal_difference: 0,
-    };
-  });
-
-  fixturesWithPayments.forEach((fixture: any) => {
-    if (!fixture.played) return;
-
-    const home = table[fixture.home_team_id];
-    const away = table[fixture.away_team_id];
-
-    if (!home || !away) return;
-
-    home.played += 1;
-    away.played += 1;
-
-    let homeGames = (fixture.home_set1 || 0) + (fixture.home_set2 || 0);
-    let awayGames = (fixture.away_set1 || 0) + (fixture.away_set2 || 0);
-
-    const homeFirstTwoSets =
-      (fixture.home_set1 > fixture.away_set1 ? 1 : 0) +
-      (fixture.home_set2 > fixture.away_set2 ? 1 : 0);
-
-    const awayFirstTwoSets =
-      (fixture.away_set1 > fixture.home_set1 ? 1 : 0) +
-      (fixture.away_set2 > fixture.home_set2 ? 1 : 0);
-
-    const thirdSetWasNeeded = homeFirstTwoSets === 1 && awayFirstTwoSets === 1;
-
-    if (thirdSetWasNeeded) {
-      homeGames += fixture.home_set3 || 0;
-      awayGames += fixture.away_set3 || 0;
-    }
-
-    home.goal_difference += homeGames - awayGames;
-    away.goal_difference += awayGames - homeGames;
-
-    if (fixture.home_score > fixture.away_score) {
-      home.won += 1;
-      away.lost += 1;
-      home.points += 3;
-    } else if (fixture.away_score > fixture.home_score) {
-      away.won += 1;
-      home.lost += 1;
-      away.points += 3;
-    } else {
-      home.drawn += 1;
-      away.drawn += 1;
-      home.points += 1;
-      away.points += 1;
-    }
-  });
-
-  const leagueTable = Object.values(table).sort((a: any, b: any) => {
-    if (b.points !== a.points) return b.points - a.points;
-    if (b.goal_difference !== a.goal_difference) {
-      return b.goal_difference - a.goal_difference;
-    }
-    if (b.won !== a.won) return b.won - a.won;
-    return a.name.localeCompare(b.name);
-  });
+  const leagueTable = calculateLeagueTable(teams || [], fixturesWithPayments);
 
   const groupedFixtures = fixturesWithPayments.reduce((acc: any, fixture: any) => {
     const round = fixture.round || 1;
@@ -708,6 +775,41 @@ export default async function Home({
 
       <div
         style={{
+          display: "flex",
+          gap: "10px",
+          marginBottom: "10px",
+          flexWrap: "wrap",
+          fontSize: "13px",
+          fontWeight: "bold",
+        }}
+      >
+        <div
+          style={{
+            background: "#dcfce7",
+            color: "#166534",
+            padding: "7px 12px",
+            borderRadius: "999px",
+            border: "1px solid #86efac",
+          }}
+        >
+          Top 2 - Winner / Promotion
+        </div>
+
+        <div
+          style={{
+            background: "#fee2e2",
+            color: "#991b1b",
+            padding: "7px 12px",
+            borderRadius: "999px",
+            border: "1px solid #fca5a5",
+          }}
+        >
+          Bottom 2 - Relegation
+        </div>
+      </div>
+
+      <div
+        style={{
           overflowX: "auto",
           border: `2px solid ${primary}`,
           borderRadius: "10px",
@@ -725,6 +827,9 @@ export default async function Home({
         >
           <thead style={{ background: primary, color: textColor }}>
             <tr>
+              <th style={{ width: "52px", padding: "8px", textAlign: "center" }}>
+                Pos
+              </th>
               <th style={{ padding: "8px", textAlign: "left" }}>Team</th>
               <th>P</th>
               <th>W</th>
@@ -736,86 +841,138 @@ export default async function Home({
           </thead>
 
           <tbody>
-            {leagueTable.map((team: any) => (
-              <tr
-                key={team.id}
-                style={{ borderBottom: `1px solid ${primary}` }}
-              >
-                <td style={{ padding: "10px", fontWeight: "bold" }}>
-                  {canAdminEdit ? (
-                    <form
-                      action={updateTeamName}
-                      style={{
-                        display: "flex",
-                        gap: "6px",
-                        alignItems: "center",
-                      }}
-                    >
-                      <input type="hidden" name="team_id" value={team.id} />
-                      <input
-                        type="hidden"
-                        name="division_id"
-                        value={selectedDivisionId}
-                      />
-                      <input
-                        type="hidden"
-                        name="league_type"
-                        value={selectedLeague}
-                      />
-                      <input
-                        type="hidden"
-                        name="season"
-                        value={selectedSeason}
-                      />
+            {leagueTable.map((team: any, index: number) => {
+              const currentPosition = index + 1;
+              const totalTeams = leagueTable.length;
+              const movement = getMovement(team, currentPosition);
 
-                      <input
-                        name="team_name"
-                        defaultValue={team.name}
-                        style={{
-                          ...inputStyle,
-                          padding: "7px",
-                          fontSize: "13px",
-                          minWidth: "150px",
-                        }}
-                      />
+              const rowBackground =
+                index <= 1
+                  ? "#dcfce7"
+                  : index >= totalTeams - 2
+                  ? "#fee2e2"
+                  : "#ffffff";
 
-                      <button
-                        type="submit"
+              return (
+                <tr
+                  key={team.id}
+                  style={{
+                    borderBottom: `1px solid ${primary}`,
+                    background: rowBackground,
+                  }}
+                >
+                  <td
+                    style={{
+                      textAlign: "center",
+                      fontWeight: "bold",
+                      fontSize: "16px",
+                    }}
+                  >
+                    {currentPosition}
+                  </td>
+
+                  <td style={{ padding: "10px", fontWeight: "bold" }}>
+                    {canAdminEdit ? (
+                      <form
+                        action={updateTeamName}
                         style={{
-                          background: primary,
-                          color: textColor,
-                          border: "none",
-                          borderRadius: "7px",
-                          padding: "8px 10px",
-                          fontWeight: "bold",
-                          cursor: "pointer",
-                          whiteSpace: "nowrap",
+                          display: "flex",
+                          gap: "6px",
+                          alignItems: "center",
                         }}
                       >
-                        Save
-                      </button>
-                    </form>
-                  ) : (
-                    <a href={`/team/${team.id}`} style={teamLinkStyle}>
-                      {team.name}
-                    </a>
-                  )}
-                </td>
+                        <input type="hidden" name="team_id" value={team.id} />
+                        <input
+                          type="hidden"
+                          name="division_id"
+                          value={selectedDivisionId}
+                        />
+                        <input
+                          type="hidden"
+                          name="league_type"
+                          value={selectedLeague}
+                        />
+                        <input
+                          type="hidden"
+                          name="season"
+                          value={selectedSeason}
+                        />
 
-                <td style={{ textAlign: "center" }}>{team.played}</td>
-                <td style={{ textAlign: "center" }}>{team.won}</td>
-                <td style={{ textAlign: "center" }}>{team.drawn}</td>
-                <td style={{ textAlign: "center" }}>{team.lost}</td>
-                <td style={{ textAlign: "center", fontWeight: "bold" }}>
-                  {team.goal_difference > 0
-                    ? `+${team.goal_difference}`
-                    : team.goal_difference}
-                </td>
-                <td style={{ textAlign: "center", fontWeight: "bold" }}>
-                  {team.points}
-                </td>
-              </tr>
-            ))}
+                        <input
+                          name="team_name"
+                          defaultValue={team.name}
+                          style={{
+                            ...inputStyle,
+                            padding: "7px",
+                            fontSize: "13px",
+                            minWidth: "150px",
+                          }}
+                        />
+
+                        <span
+                          title={movement.label}
+                          style={{
+                            color: movement.color,
+                            fontWeight: "bold",
+                            fontSize: "14px",
+                            minWidth: "34px",
+                            display: "inline-block",
+                          }}
+                        >
+                          {movement.text}
+                        </span>
+
+                        <button
+                          type="submit"
+                          style={{
+                            background: primary,
+                            color: textColor,
+                            border: "none",
+                            borderRadius: "7px",
+                            padding: "8px 10px",
+                            fontWeight: "bold",
+                            cursor: "pointer",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          Save
+                        </button>
+                      </form>
+                    ) : (
+                      <>
+                        <a href={`/team/${team.id}`} style={teamLinkStyle}>
+                          {team.name}
+                        </a>
+
+                        <span
+                          title={movement.label}
+                          style={{
+                            marginLeft: "8px",
+                            color: movement.color,
+                            fontWeight: "bold",
+                          }}
+                        >
+                          {movement.text}
+                        </span>
+                      </>
+                    )}
+                  </td>
+
+                  <td style={{ textAlign: "center" }}>{team.played}</td>
+                  <td style={{ textAlign: "center" }}>{team.won}</td>
+                  <td style={{ textAlign: "center" }}>{team.drawn}</td>
+                  <td style={{ textAlign: "center" }}>{team.lost}</td>
+                  <td style={{ textAlign: "center", fontWeight: "bold" }}>
+                    {team.goal_difference > 0
+                      ? `+${team.goal_difference}`
+                      : team.goal_difference}
+                  </td>
+                  <td style={{ textAlign: "center", fontWeight: "bold" }}>
+                    {team.points}
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
