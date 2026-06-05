@@ -265,12 +265,14 @@ async function submitScore(formData: FormData) {
     currentFixtures || []
   );
 
-  for (const [index, team] of tableBeforeResult.entries()) {
-    await supabase
-      .from("teams")
-      .update({ previous_position: index + 1 })
-      .eq("id", team.id);
-  }
+for (const [index, team] of tableBeforeResult.entries()) {
+  const teamRow = team as any;
+
+  await supabase
+    .from("teams")
+    .update({ previous_position: index + 1 })
+    .eq("id", teamRow.id);
+}
 
   let homeSets = 0;
   let awaySets = 0;
