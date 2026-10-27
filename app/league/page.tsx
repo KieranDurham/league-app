@@ -686,31 +686,82 @@ export default async function Home({
         <div
           style={{
             display: "flex",
+            alignItems: "flex-start",
             gap: "8px",
-            overflowX: "auto",
             marginBottom: "14px",
-            paddingBottom: "6px",
           }}
         >
-          {[1, 2, 3].map((season) => (
-            <a
-              key={season}
-              href={`/league?league=mens&division=${selectedDivisionId}&season=${season}${adminQuery}`}
+          <details
+            key={`previous-seasons-${selectedSeason}`}
+            open={selectedSeason < 3}
+            style={{ position: "relative", minWidth: 0, flex: "1 1 0" }}
+          >
+            <summary
               style={{
-                padding: "9px 14px",
+                display: "block",
+                cursor: "pointer",
+                textAlign: "center",
+                padding: "9px 12px",
                 borderRadius: "999px",
-                background: selectedSeason === season ? primary : "#eeeeee",
-                color: selectedSeason === season ? textColor : "#000000",
-                textDecoration: "none",
-                whiteSpace: "nowrap",
+                background: selectedSeason < 3 ? primary : "#eeeeee",
+                color: selectedSeason < 3 ? textColor : "#000000",
                 fontWeight: "bold",
                 border: "1px solid #dddddd",
+                whiteSpace: "nowrap",
+                listStyle: "none",
               }}
             >
-              Season {season}
-              {season < 3 ? " History" : ""}
-            </a>
-          ))}
+              Previous Seasons ▾
+            </summary>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: "6px",
+                padding: "8px",
+                marginTop: "6px",
+                background: "#ffffff",
+                border: "1px solid #dddddd",
+                borderRadius: "12px",
+              }}
+            >
+              {[1, 2].map((season) => (
+                <a
+                  key={season}
+                  href={`/league?league=mens&division=${selectedDivisionId}&season=${season}${adminQuery}`}
+                  style={{
+                    display: "block",
+                    padding: "10px",
+                    background: selectedSeason === season ? "#e5e7eb" : "#f9fafb",
+                    color: "#111827",
+                    textDecoration: "none",
+                    borderRadius: "8px",
+                    fontWeight: "bold",
+                  }}
+                >
+                  Season {season}
+                </a>
+              ))}
+            </div>
+          </details>
+          <a
+            href={`/league?league=mens&division=${selectedDivisionId}&season=3${adminQuery}`}
+            style={{
+              flex: "1 1 0",
+              minWidth: 0,
+              padding: "9px 12px",
+              borderRadius: "999px",
+              background: selectedSeason === 3 ? primary : "#eeeeee",
+              color: selectedSeason === 3 ? textColor : "#000000",
+              textDecoration: "none",
+              textAlign: "center",
+              whiteSpace: "nowrap",
+              fontWeight: "bold",
+              border: "1px solid #dddddd",
+            }}
+          >
+            Season 3
+          </a>
         </div>
       )}
 
