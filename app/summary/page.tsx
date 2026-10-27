@@ -19,7 +19,7 @@ export default async function SummaryPage({
   const selectedLeague = params?.league || "mens";
   const selectedSeason =
     selectedLeague === "mens"
-      ? Number(params?.season || 2)
+      ? Number(params?.season || 3)
       : Number(params?.season || 1);
 
   const isScreenshot = params?.view === "screenshot";

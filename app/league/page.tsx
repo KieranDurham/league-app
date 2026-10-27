@@ -28,6 +28,16 @@ function publicRedirect(
   );
 }
 
+function isArchivedSeason(leagueType: string, season: number) {
+  return leagueType === "mens" && (season === 1 || season === 2);
+}
+
+function ensureEditableSeason(leagueType: string, season: number) {
+  if (isArchivedSeason(leagueType, season)) {
+    throw new Error("Archived seasons are read-only.");
+  }
+}
+
 function calculateLeagueTable(teams: any[] = [], fixtures: any[] = []) {
   const table: any = {};
 
@@ -146,6 +156,7 @@ async function updateTeamName(formData: FormData) {
   const divisionId = Number(formData.get("division_id"));
   const leagueType = String(formData.get("league_type") || "mens");
   const season = Number(formData.get("season") || 1);
+  ensureEditableSeason(leagueType, season);
   const teamName = String(formData.get("team_name") || "").trim();
 
   if (!teamId || !teamName) {
@@ -161,6 +172,31 @@ async function updateTeamName(formData: FormData) {
   adminRedirect(leagueType, divisionId, season);
 }
 
+async function addTeam(formData: FormData) {
+  "use server";
+
+  const divisionId = Number(formData.get("division_id"));
+  const leagueType = String(formData.get("league_type") || "mens");
+  const season = Number(formData.get("season") || 3);
+  const teamName = String(formData.get("team_name") || "").trim();
+  ensureEditableSeason(leagueType, season);
+
+  if (!divisionId || !teamName || teamName.length > 200) {
+    adminRedirect(leagueType, divisionId, season);
+  }
+
+  const { error } = await supabase.from("teams").insert({
+    name: teamName,
+    division_id: divisionId,
+    league_type: leagueType,
+    season,
+  });
+  if (error) throw new Error(`Unable to add team: ${error.message}`);
+
+  revalidatePath("/league");
+  adminRedirect(leagueType, divisionId, season);
+}
+
 async function addFixture(formData: FormData) {
   "use server";
 
@@ -173,6 +209,7 @@ async function addFixture(formData: FormData) {
   const isPrivateGame = formData.get("is_private_game") === "on";
   const leagueType = String(formData.get("league_type") || "mens");
   const season = Number(formData.get("season") || 1);
+  ensureEditableSeason(leagueType, season);
 
   if (!divisionId || !round || !homeTeamId || !awayTeamId || homeTeamId === awayTeamId) {
     adminRedirect(leagueType, divisionId, season);
@@ -214,6 +251,7 @@ async function togglePrivateGame(formData: FormData) {
   const currentValue = formData.get("current_value") === "true";
   const leagueType = String(formData.get("league_type") || "mens");
   const season = Number(formData.get("season") || 1);
+  ensureEditableSeason(leagueType, season);
 
   await supabase
     .from("fixtures")
@@ -234,6 +272,7 @@ async function submitScore(formData: FormData) {
   const divisionId = Number(formData.get("division_id"));
   const leagueType = String(formData.get("league_type") || "mens");
   const season = Number(formData.get("season") || 1);
+  ensureEditableSeason(leagueType, season);
 
   const h1 = Number(formData.get("home_set1"));
   const a1 = Number(formData.get("away_set1"));
@@ -319,6 +358,7 @@ async function resetScore(formData: FormData) {
   const divisionId = Number(formData.get("division_id"));
   const leagueType = String(formData.get("league_type") || "mens");
   const season = Number(formData.get("season") || 1);
+  ensureEditableSeason(leagueType, season);
 
   await supabase
     .from("fixtures")
@@ -348,6 +388,7 @@ async function generateFixtures(formData: FormData) {
   const divisionId = Number(formData.get("division_id"));
   const leagueType = String(formData.get("league_type") || "mens");
   const season = Number(formData.get("season") || 1);
+  ensureEditableSeason(leagueType, season);
 
   const { data: teams } = await supabase
     .from("teams")
@@ -445,10 +486,11 @@ export default async function Home({
   const selectedLeague = params?.league || "mens";
   const isAdmin = params?.admin === "true";
   const selectedSeason =
-    selectedLeague === "mens" ? Number(params?.season || 2) : Number(params?.season || 1);
+    selectedLeague === "mens" ? Number(params?.season || 3) : Number(params?.season || 1);
 
-  const isHistoricalMensSeason = selectedLeague === "mens" && selectedSeason === 1;
+  const isHistoricalMensSeason = isArchivedSeason(selectedLeague, selectedSeason);
   const canAdminEdit = isAdmin && !isHistoricalMensSeason;
+  const paymentsEnabled = !(selectedLeague === "mens" && selectedSeason === 3);
   const adminQuery = isAdmin ? "&admin=true" : "";
 
   const { data: divisions } = await supabase
@@ -509,7 +551,7 @@ export default async function Home({
     });
   });
 
-  if (missingPaymentsToCreate.length > 0 && !isHistoricalMensSeason) {
+  if (missingPaymentsToCreate.length > 0 && !isHistoricalMensSeason && paymentsEnabled) {
     await supabase.from("fixture_payments").upsert(missingPaymentsToCreate, {
       onConflict: "fixture_id,team_id,player_name",
       ignoreDuplicates: true,
@@ -610,7 +652,7 @@ export default async function Home({
 
       <div style={{ display: "flex", gap: "8px", marginBottom: "14px" }}>
         <a
-          href={`/league?league=mens&division=1&season=2${adminQuery}`}
+          href={`/league?league=mens&division=1&season=3${adminQuery}`}
           style={{
             padding: "9px 13px",
             borderRadius: "999px",
@@ -650,7 +692,7 @@ export default async function Home({
             paddingBottom: "6px",
           }}
         >
-          {[1, 2].map((season) => (
+          {[1, 2, 3].map((season) => (
             <a
               key={season}
               href={`/league?league=mens&division=${selectedDivisionId}&season=${season}${adminQuery}`}
@@ -666,7 +708,7 @@ export default async function Home({
               }}
             >
               Season {season}
-              {season === 1 ? " History" : ""}
+              {season < 3 ? " History" : ""}
             </a>
           ))}
         </div>
@@ -720,7 +762,7 @@ export default async function Home({
           }}
         >
           {isHistoricalMensSeason
-            ? "Season 1 History View - Editing Disabled"
+            ? `Season ${selectedSeason} History View - Editing Disabled`
             : "Admin View Active"}
         </div>
       )}
@@ -979,6 +1021,20 @@ export default async function Home({
         </table>
       </div>
 
+      {canAdminEdit && selectedLeague === "mens" && selectedSeason === 3 && (
+        <div style={cardStyle(primary)}>
+          <h3 style={{ marginTop: 0 }}>Season 3 Teams</h3>
+          <p>Add each new team to its division before generating the fixtures. Previous seasons remain unchanged.</p>
+          <form action={addTeam} style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+            <input type="hidden" name="division_id" value={selectedDivisionId} />
+            <input type="hidden" name="league_type" value={selectedLeague} />
+            <input type="hidden" name="season" value={selectedSeason} />
+            <input name="team_name" required maxLength={200} placeholder="Player 1 & Player 2" style={{ ...inputStyle, flex: "1 1 200px" }} />
+            <button type="submit" style={buttonPrimaryStyle(primary, textColor)}>Add Team</button>
+          </form>
+        </div>
+      )}
+
       {canAdminEdit && (
         <div style={cardStyle(primary)}>
           <h3 style={{ marginTop: 0 }}>Fixture Generator</h3>
@@ -1159,7 +1215,7 @@ export default async function Home({
               }}
             >
               <input name="is_private_game" type="checkbox" />
-              Private game - no payment required
+              Private game
             </label>
 
             <button type="submit" style={buttonPrimaryStyle(primary, textColor)}>
@@ -1256,7 +1312,7 @@ export default async function Home({
                   </strong>
                 </div>
 
-                {!isHistoricalMensSeason && (
+                {!isHistoricalMensSeason && paymentsEnabled && (
                   <div
                     style={{
                       border: "1px solid #e5e7eb",
